@@ -141,6 +141,16 @@ class UpdateTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.calls, [])
         self.assertEqual(self.hs.backup_offset_c("default", "climate.living"), 0.0)
 
+    async def test_switching_off_the_feature_stops_a_running_device(self):
+        await self.hs.update("default", self.mgr)
+        self.assertEqual(self.states["climate.eurom"].state, "heat")
+        self.settings["heat_sources"]["enabled"] = False
+        await self.hs.update("default", self.mgr)
+        self.assertEqual(self.states["climate.eurom"].state, "off")
+        self.calls.clear()
+        await self.hs.update("default", self.mgr)
+        self.assertEqual(self.calls, [])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -310,8 +310,8 @@ class HeatSources:
             room_status.update({"source": source, "active": active, "target_c": target_c, "room_c": room_c,
                                 "since": self.choice[key]["since"]})
             for device in devices:
-                if not enabled and device.get("mode") != "always":
-                    continue  # feature off: leave devices alone
+                if not enabled and device.get("mode") != "always" and prev != "alt":
+                    continue  # feature off: leave devices alone (but stop one we were running)
                 await self._drive(device, device["entity"] == active, target_c, room_c)
 
         self.status[iid] = status

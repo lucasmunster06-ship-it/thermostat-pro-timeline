@@ -1,6 +1,6 @@
 # Thermostat Pro Timeline
 
-> **Fork:** deze versie voegt een thermostaat als ketel (bijv. Nefit), boost per ruimte of voor alles, en ketelvraag vanuit alle radiatoren in een ruimte toe. Zie [FORK.md](FORK.md).
+> **Fork:** deze versie voegt een thermostaat als ketel (bijv. Nefit), boost per ruimte of voor alles, ketelvraag vanuit alle radiatoren, grafieken per ruimte en automatisch de goedkoopste warmtebron (gas, airco, elektrisch) toe. Zie [FORK.md](FORK.md).
 
 [![Latest release downloads](https://img.shields.io/github/downloads/qlerup/thermostat-pro-timeline/latest/total?label=latest%20release%20downloads)](https://github.com/qlerup/thermostat-pro-timeline/releases/latest) [![Support the project on Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20the%20project-ff5e5b?logo=kofi&logoColor=white)](https://ko-fi.com/qlerup)
 

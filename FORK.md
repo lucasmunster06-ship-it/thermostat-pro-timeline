@@ -36,11 +36,13 @@ ruimtes aanvinkt. Eén koude radiator is genoeg om de ketel te laten aanslaan.
 
 ## 3. Boost per ruimte of voor alles
 
-- **Per ruimte:** het 🔥-knopje naast de pauzeknop van een ruimte
-- **Alles:** de pauzeknop in de kop van de kaart, met de boost-sectie onderaan
-- Kies **+0,5 tot +4 °C** en de duur: **tot het volgende blok**, of 30, 60, 120 of 180 minuten
-- Alle radiatoren in de ruimte gaan omhoog, en de ketel volgt
-- Daarna gaat de ruimte automatisch terug naar het programma. Dat werkt ook na een herstart van Home Assistant.
+- **Per ruimte:** het 🔥-knopje bij de ruimte. **Alles:** de 🔥-knop in de kop van de kaart.
+- Kies hoeveel warmer (+0,5 tot +4 °C) en hoe lang: **tot het volgende blok**, of 30 min tot 3 uur.
+- Een lopende boost zie je aan het oranje label bij de ruimte ("Boost 22° tot 20:16") en aan de
+  gestreepte balk in de tijdlijn. Een handmatige wijziging aan een knop krijgt een blauw label.
+- Alle radiatoren in de ruimte gaan omhoog, en de ketel volgt. Daarna gaat de ruimte vanzelf terug
+  naar het programma, ook na een herstart.
+- Pauzeren heeft een eigen venster (pauzeknop).
 
 Voor automatiseringen of dashboardknoppen:
 
@@ -58,10 +60,42 @@ data:
   entity_id: climate.slaapkamer   # weglaten = alle boosts stoppen
 ```
 
+## 4. Grafiek per ruimte
+
+Het 📈-knopje bij een ruimte opent een grafiek met de gemeten temperatuur (en die van de andere
+radiatoren), de ingestelde temperatuur, het programma (ook vooruit), de buitentemperatuur, en
+tijdbalken voor verwarmen, ketel, extra warmtebron en boost/handmatig. Je kiest 6 uur tot 7 dagen
+terug en tot 24 uur vooruit. Beweeg over de grafiek of tik erop voor de waarden. De geschiedenis komt
+uit de recorder van Home Assistant.
+
+## 5. Goedkoopste warmtebron (gas, airco/warmtepomp, elektrisch)
+
+Ga naar **Instellingen → Ketel → Warmtebronnen & kosten → Instellen**.
+
+- **Gasprijs** in €/m³ en **stroomprijs** in €/kWh: als vast bedrag of uit een sensor (bijv. Frank
+  Energie). Een sensor in ct/kWh wordt automatisch omgerekend. Gebruik all-in prijzen.
+- **Ketelrendement** (standaard 90 %) en **kWh per m³** (9,77 in NL).
+- **Buitentemperatuur-sensor**, bijv. die van de Nefit.
+- **Per ruimte een extra apparaat**: een airco/warmtepomp (`climate`) met het rendement (COP) bij
+  −7, 2, 7 en 12 °C buiten, of een elektrische kachel (`switch`, COP 1).
+
+Elke minuut rekent Timeline uit wat 1 kWh warmte kost:
+gas = gasprijs ÷ (9,77 × rendement), airco = stroomprijs ÷ COP bij de huidige buitentemperatuur.
+Is het apparaat minstens de ingestelde marge (5 %) goedkoper, dan:
+- gaat de airco op verwarmen naar de doeltemperatuur van de ruimte, en wordt een kachel aan/uit
+  geschakeld op de kamertemperatuur;
+- blijven de radiatoren 2 °C lager als back-up, zodat de ketel alleen bijspringt als het apparaat
+  het niet redt.
+
+Om pendelen te voorkomen wisselt hij hooguit eens per 10 minuten. Onder de ingestelde
+buitentemperatuur (standaard −10 °C) wordt de airco niet gebruikt. Zet je de functie uit, dan wordt
+een draaiend apparaat uitgezet. Het groene €-knopje in de kop van de kaart opent het overzicht met
+de actuele prijzen per kWh warmte.
+
 ## Backup
 
-Alles wordt opgeslagen in de instellingen van de integratie: de ketelinstellingen (`boiler_climate`)
-en lopende boosts (`room_pause` met `source: boost`). Daardoor zit het automatisch in de bestaande
+Alles wordt opgeslagen in de instellingen van de integratie: de ketelinstellingen (`boiler_climate`),
+de warmtebronnen en prijzen (`heat_sources`) en lopende boosts (`room_pause` met `source: boost`). Daardoor zit het automatisch in de bestaande
 backup en restore. Je bestaande schema's en backups blijven behouden, omdat de integratie hetzelfde
 domein (`thermostat_timeline`) gebruikt.
 
@@ -75,7 +109,6 @@ domein (`thermostat_timeline`) gebruikt.
 
 Deze fork werkt zonder GitHub-releases. HACS installeert direct vanaf de `main`-branch.
 
-## Gepland
+## Gepland / ideeën
 
-- **Fase 2:** grafieken per ruimte (gemeten temperatuur, programma, buitentemperatuur, tijdbalken voor ketel, boost en raam)
-- **Fase 3:** goedkoopste warmtebron kiezen tussen gas, airco/warmtepomp en elektrisch, met een vaste prijs of een prijssensor (bijv. Frank Energie)
+- Kosten per dag bijhouden (wat heeft verwarmen gekost, wat heeft de airco bespaard)

@@ -4549,6 +4549,65 @@ const TT_LANG_ALIAS = { no: 'nb', cz: 'cs', dk: 'da' };
 function ttBoilerDom(v){ const d = String(v || '').toLowerCase().trim(); return (d === 'input_boolean' || d === 'climate') ? d : 'switch'; }
 Object.assign(TT_I18N.en, {
   'boost.title': 'Boost',
+  'heat.title': 'Heat sources & costs',
+  'heat.explain': 'Per room, automatically use the cheapest heat source: gas boiler, heat pump/airco or electric heater.',
+  'heat.open': 'Set up',
+  'heat.cancel': 'Cancel',
+  'heat.enable': 'Automatically use the cheapest heat source',
+  'heat.prices': 'Prices',
+  'heat.gas_price': 'Gas price',
+  'heat.power_price': 'Electricity price',
+  'heat.fixed': 'Fixed amount',
+  'heat.sensor': 'From a sensor',
+  'heat.price_hint': 'Use all-in prices (incl. tax). A sensor in ct/kWh is converted automatically, e.g. a dynamic price sensor from your supplier.',
+  'heat.boiler': 'Boiler and outdoor temperature',
+  'heat.efficiency': 'Boiler efficiency (%)',
+  'heat.kwh_m3': 'kWh per m³ gas',
+  'heat.outdoor': 'Outdoor temperature sensor',
+  'heat.outdoor_hint': 'Used for the heat pump efficiency (COP) and the chart.',
+  'heat.rooms': 'Extra heaters per room',
+  'heat.rooms_hint': 'Add an airco/heat pump or an electric heater. When it is cheaper it heats the room, and the radiators stay a little lower as back-up.',
+  'heat.device': 'Device',
+  'heat.kind': 'Type',
+  'heat.kind_hp': 'Heat pump / airco',
+  'heat.kind_el': 'Electric heater',
+  'heat.mode': 'Use',
+  'heat.mode_auto': 'When cheaper',
+  'heat.mode_always': 'Always',
+  'heat.mode_never': 'Never',
+  'heat.cop': 'Efficiency (COP) at outdoor temperature',
+  'heat.cop_hint': 'How many kWh of heat per kWh of electricity. See the spec sheet; typical airco: 2–4.',
+  'heat.min_outdoor': 'Do not use below (°C outside)',
+  'heat.remove': 'Remove',
+  'heat.add': 'Add device',
+  'heat.advanced': 'Advanced',
+  'heat.margin': 'Minimum saving (%)',
+  'heat.margin_hint': 'Only switch when the other source is at least this much cheaper.',
+  'heat.backup': 'Radiators lower by (°C)',
+  'heat.backup_hint': 'While another source heats, radiators stay this much lower as back-up.',
+  'heat.gas_heat': 'Gas heat',
+  'heat.active': 'active',
+  'heat.cheaper': 'cheaper',
+  'heat.no_devices': 'No extra heaters added yet.',
+  'chart.tooltip': 'Chart',
+  'chart.past': 'Past',
+  'chart.ahead': 'Ahead',
+  'chart.h': 'h',
+  'chart.d': 'd',
+  'chart.loading': 'Loading history…',
+  'chart.error': 'Could not load history',
+  'chart.now': 'NOW',
+  'chart.measured': 'Measured',
+  'chart.setpoint': 'Setpoint',
+  'chart.plan': 'Schedule',
+  'chart.radiators': 'Other radiators',
+  'chart.outdoor': 'Outdoor',
+  'chart.lane_heating': 'Heating',
+  'chart.lane_boiler': 'Boiler',
+  'chart.lane_alt': '{name}',
+  'chart.lane_hold': 'Boost / hold',
+  'chart.source_now': 'Heat source now: {src}',
+  'heat.gas': 'gas boiler',
   'boost.pill': 'Boost {temp} until {time}',
   'hold.pill': 'Manual {temp} until {time}',
   'boost.title_room': 'Boost — {room}',
@@ -4578,6 +4637,66 @@ Object.assign(TT_I18N.en, {
 });
 TT_I18N.nl = Object.assign(TT_I18N.nl || {}, {
   'boost.title': 'Boost',
+  'heat.title': 'Warmtebronnen & kosten',
+  'heat.explain': 'Per ruimte automatisch de goedkoopste warmtebron gebruiken: gasketel, warmtepomp/airco of elektrische kachel.',
+  'heat.open': 'Instellen',
+  'heat.cancel': 'Annuleren',
+  'heat.enable': 'Automatisch de goedkoopste warmtebron gebruiken',
+  'heat.prices': 'Prijzen',
+  'heat.gas_price': 'Gasprijs',
+  'heat.power_price': 'Stroomprijs',
+  'heat.fixed': 'Vast bedrag',
+  'heat.sensor': 'Uit een sensor',
+  'heat.price_hint': 'Gebruik all-in prijzen (incl. belastingen). Een sensor in ct/kWh wordt automatisch omgerekend, bijv. de prijssensor van Frank Energie.',
+  'heat.boiler': 'Ketel en buitentemperatuur',
+  'heat.efficiency': 'Rendement ketel (%)',
+  'heat.kwh_m3': 'kWh per m³ gas',
+  'heat.outdoor': 'Buitentemperatuur-sensor',
+  'heat.outdoor_hint': 'Voor het rendement (COP) van de warmtepomp en voor de grafiek.',
+  'heat.rooms': 'Extra verwarming per ruimte',
+  'heat.rooms_hint': 'Voeg een airco/warmtepomp of elektrische kachel toe. Is die goedkoper, dan verwarmt hij de ruimte en blijven de radiatoren iets lager als back-up.',
+  'heat.device': 'Apparaat',
+  'heat.kind': 'Soort',
+  'heat.kind_hp': 'Warmtepomp / airco',
+  'heat.kind_el': 'Elektrische kachel',
+  'heat.mode': 'Gebruiken',
+  'heat.mode_auto': 'Als goedkoper',
+  'heat.mode_always': 'Altijd',
+  'heat.mode_never': 'Nooit',
+  'heat.cop': 'Rendement (COP) bij buitentemperatuur',
+  'heat.cop_hint': 'Hoeveel kWh warmte per kWh stroom. Zie de specificaties; een airco zit meestal tussen 2 en 4.',
+  'heat.min_outdoor': 'Niet gebruiken onder (°C buiten)',
+  'heat.remove': 'Verwijderen',
+  'heat.add': 'Apparaat toevoegen',
+  'heat.advanced': 'Geavanceerd',
+  'heat.margin': 'Minimale besparing (%)',
+  'heat.margin_hint': 'Pas wisselen als de andere bron minstens zoveel goedkoper is.',
+  'heat.backup': 'Radiatoren lager met (°C)',
+  'heat.backup_hint': 'Zolang een andere bron verwarmt, blijven de radiatoren zoveel lager als back-up.',
+  'heat.gas_heat': 'Warmte uit gas',
+  'heat.active': 'actief',
+  'heat.cheaper': 'goedkoper',
+  'heat.no_devices': 'Nog geen extra verwarming toegevoegd.',
+  'ui.save': 'Opslaan',
+  'chart.tooltip': 'Grafiek',
+  'chart.past': 'Terug',
+  'chart.ahead': 'Vooruit',
+  'chart.h': 'u',
+  'chart.d': 'd',
+  'chart.loading': 'Geschiedenis laden…',
+  'chart.error': 'Geschiedenis kon niet geladen worden',
+  'chart.now': 'NU',
+  'chart.measured': 'Gemeten',
+  'chart.setpoint': 'Ingesteld',
+  'chart.plan': 'Programma',
+  'chart.radiators': 'Andere radiatoren',
+  'chart.outdoor': 'Buiten',
+  'chart.lane_heating': 'Verwarmen',
+  'chart.lane_boiler': 'Ketel',
+  'chart.lane_alt': '{name}',
+  'chart.lane_hold': 'Boost / handmatig',
+  'chart.source_now': 'Warmtebron nu: {src}',
+  'heat.gas': 'gasketel',
   'boost.pill': 'Boost {temp} tot {time}',
   'hold.pill': 'Handmatig {temp} tot {time}',
   'boost.title_room': 'Boost — {room}',
@@ -4657,7 +4776,7 @@ function ttLocalize(key, langOrHass) {
 // Simple runtime version to help with cache-busting diagnostics in HA.
 // Update this when shipping changes so the version appears in the
 // "Custom cards" panel and in logs.
-const TT_CARD_VERSION = "3.6.1";
+const TT_CARD_VERSION = "3.7.0";
 
 class ThermostatTimelineCard extends HTMLElement {
   static get version() { return TT_CARD_VERSION; }
@@ -6328,7 +6447,7 @@ class ThermostatTimelineCard extends HTMLElement {
               if (Array.isArray(s.holidays_dates) && !this._yamlProvided?.holidays_dates) this._config.holidays_dates = [...s.holidays_dates];
               if (Array.isArray(s.holidays_groups)) this._config.holidays_groups = [...s.holidays_groups];
             } catch {}
-            for (const key of ['manual_target_hold', 'alarm_pause', 'season_follow', 'seasonal_sources', 'air_rooms', 'thermal_rooms', 'confirm_season_change', 'sensor_season_last', 'summer_off_rooms', 'holiday_trips', 'workday_plans', 'boiler_manual_targets', 'boiler_climate']) {
+            for (const key of ['manual_target_hold', 'alarm_pause', 'season_follow', 'seasonal_sources', 'air_rooms', 'thermal_rooms', 'confirm_season_change', 'sensor_season_last', 'summer_off_rooms', 'holiday_trips', 'workday_plans', 'boiler_manual_targets', 'boiler_climate', 'heat_sources']) {
               if (key in s) this._config[key] = s[key];
             }
             // Weekdays settings (shared)
@@ -6613,7 +6732,7 @@ class ThermostatTimelineCard extends HTMLElement {
   try { this._awayBypass = !!s.away_bypass; } catch {}
   // Open Window Detection from local storage copy
   try { if (s.open_window && typeof s.open_window==='object') this._config.open_window = { ...s.open_window }; } catch {}
-  for (const key of ['manual_target_hold', 'alarm_pause', 'season_follow', 'seasonal_sources', 'air_rooms', 'thermal_rooms', 'confirm_season_change', 'sensor_season_last', 'summer_off_rooms', 'holiday_trips', 'workday_plans', 'boiler_manual_targets', 'boiler_climate']) {
+  for (const key of ['manual_target_hold', 'alarm_pause', 'season_follow', 'seasonal_sources', 'air_rooms', 'thermal_rooms', 'confirm_season_change', 'sensor_season_last', 'summer_off_rooms', 'holiday_trips', 'workday_plans', 'boiler_manual_targets', 'boiler_climate', 'heat_sources']) {
     if (key in s) this._config[key] = s[key];
   }
   // Weekdays flags and view (persist across refresh) — skip if editor preview forbids overrides
@@ -8685,6 +8804,546 @@ class ThermostatTimelineCard extends HTMLElement {
     set('.boost-active-text', activeText);
     if (startBtn) startBtn.textContent = activeText ? this._t('boost.restart') : this._t('boost.start');
   }
+  // --- Room chart (history from Home Assistant's recorder + schedule ahead) ---
+  _openChart(eid){
+    try {
+      this._chartRoom = this._roomPauseKey ? this._roomPauseKey(eid) : eid;
+      if (!this._chartPast) this._chartPast = 24;
+      if (this._chartAhead == null) this._chartAhead = 12;
+      const ov = this.shadowRoot && this.shadowRoot.querySelector('.overlay-chart');
+      if (ov) ov.classList.add('open');
+      this._chartReload();
+    } catch {}
+  }
+  _guessOutdoorSensor(){
+    try {
+      for (const [id, st] of Object.entries(this._hass?.states || {})) {
+        if (!id.startsWith('sensor.')) continue;
+        const unit = String(st.attributes?.unit_of_measurement || '');
+        if (!unit.includes('°')) continue;
+        if (/outdoor|outside|buiten/i.test(id + ' ' + (st.attributes?.friendly_name || ''))) return id;
+      }
+    } catch {}
+    return '';
+  }
+  _chartEntities(primary){
+    const merges = this._config?.merges || {};
+    const members = (Array.isArray(merges[primary]) ? merges[primary] : []).filter(e => String(e).startsWith('climate.'));
+    const tempSensor = String((this._config?.temp_sensors || {})[primary] || '');
+    const hs = this._config?.heat_sources || {};
+    const outdoor = String(hs.outdoor_sensor || '') || this._guessOutdoorSensor();
+    let boiler = '';
+    if (this._config?.boiler_enabled) {
+      if (this._config.boiler_multi_enabled) {
+        const r = (this._config.boiler_room_settings || {})[primary];
+        boiler = r && r.enabled ? String(r.switch || '') : '';
+      } else boiler = String(this._config.boiler_switch || '');
+    }
+    const alts = ((hs.rooms || {})[primary] || []).map(d => String(d?.entity || '')).filter(Boolean);
+    return { primary, members, tempSensor, outdoor, boiler, alts };
+  }
+  async _chartReload(){
+    this._chartData = null;
+    this._chartError = '';
+    this._renderChart();
+    const ents = this._chartEntities(this._chartRoom);
+    const ids = [ents.primary, ...ents.members, ents.tempSensor, ents.outdoor, ents.boiler, ...ents.alts]
+      .filter((v, i, a) => v && a.indexOf(v) === i);
+    const end = Date.now();
+    const start = end - this._chartPast * 3600e3;
+    let hist = {};
+    try {
+      hist = await this._hass.callWS({
+        type: 'history/history_during_period',
+        start_time: new Date(start).toISOString(), end_time: new Date(end).toISOString(),
+        entity_ids: ids, include_start_time_state: true, significant_changes_only: false,
+        minimal_response: false, no_attributes: false,
+      }) || {};
+    } catch (e) { this._chartError = String(e?.message || e); }
+    this._chartData = { ents, start, end, hist };
+    try { const api = this._apiFetchState ? await this._apiFetchState() : null; if (api?.heat_status) this._heatStatus = api.heat_status; } catch {}
+    this._renderChart();
+  }
+  _histPoints(id){
+    const data = this._chartData;
+    if (!data || !id) return [];
+    let lastA = {};
+    const pts = (data.hist?.[id] || []).map(e => {
+      const a = e.a || e.attributes || lastA;
+      lastA = a;
+      const raw = e.lu != null ? e.lu * 1000 : (e.lc != null ? e.lc * 1000 : Date.parse(e.last_updated || e.last_changed));
+      return { t: Math.max(data.start, raw), s: e.s ?? e.state, a };
+    }).filter(p => Number.isFinite(p.t));
+    const live = this._hass?.states?.[id];
+    if (live) pts.push({ t: data.end, s: live.state, a: live.attributes || {} });
+    return pts.sort((x, y) => x.t - y.t);
+  }
+  _chartTempC(value, unit){
+    const v = Number(value);
+    if (value === null || value === undefined || value === '' || !Number.isFinite(v)) return null;
+    const u = String(unit || '');
+    if (u.includes('F')) return (v - 32) / 1.8;
+    if (u === 'K') return v - 273.15;
+    return v;
+  }
+  _planAt(primary, t){
+    const d = new Date(t);
+    const key = this._weekdayNames()[(d.getDay() + 6) % 7];
+    let v = null;
+    try {
+      this._todayKey = () => key;
+      this._planDay = () => key;
+      v = this._desiredTempFor(primary, d.getHours() * 60 + d.getMinutes());
+    } catch {} finally { delete this._todayKey; delete this._planDay; }
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+  _chartSeries(){
+    const data = this._chartData;
+    const ents = data.ents;
+    const haUnit = this._haIsF() ? '°F' : '°C';
+    const climTemp = (id, attr) => this._histPoints(id).map(p => ({ t: p.t, v: this._chartTempC(p.a?.[attr], haUnit) }));
+    const sensTemp = (id) => this._histPoints(id).map(p => ({ t: p.t, v: this._chartTempC(p.s, p.a?.unit_of_measurement || '°C') }));
+    const measured = ents.tempSensor ? sensTemp(ents.tempSensor) : climTemp(ents.primary, 'current_temperature');
+    const members = ents.members.map(id => ({ id, pts: climTemp(id, 'current_temperature') }));
+    const setpoint = climTemp(ents.primary, 'temperature');
+    const outdoor = ents.outdoor ? sensTemp(ents.outdoor) : [];
+    const plan = [];
+    const step = Math.max(5, Math.round(this._chartPast / 24 * 10)) * 60e3;
+    const tEnd = data.end + this._chartAhead * 3600e3;
+    for (let t = data.start; t <= tEnd; t += step) plan.push({ t, v: this._planAt(ents.primary, t) });
+    const on = (pts, fn) => pts.map(p => ({ t: p.t, v: fn(p) ? 1 : 0 }));
+    const heating = [ents.primary, ...ents.members].map(id => on(this._histPoints(id), p => p.a?.hvac_action === 'heating'));
+    const lanes = [];
+    lanes.push({ key: 'heat', label: this._t('chart.lane_heating'), color: '#ef5350', segs: this._mergeLanes(heating) });
+    if (ents.boiler) {
+      const dom = ents.boiler.split('.')[0];
+      const pts = this._histPoints(ents.boiler);
+      const fn = dom === 'climate'
+        ? (p => p.a?.hvac_action ? p.a.hvac_action === 'heating' : Number(p.a?.temperature) > Number(p.a?.current_temperature) + 0.2)
+        : (p => p.s === 'on');
+      lanes.push({ key: 'boiler', label: this._t('chart.lane_boiler'), color: '#ff9800', segs: this._mergeLanes([on(pts, fn)]) });
+    }
+    for (const id of ents.alts) {
+      const pts = this._histPoints(id);
+      lanes.push({ key: 'alt:' + id, label: this._t('chart.lane_alt').replace('{name}', this._prettyName ? this._prettyName(id) : id),
+        color: '#66bb6a', segs: this._mergeLanes([on(pts, p => !['off', 'unavailable', 'unknown', ''].includes(String(p.s)))]) });
+    }
+    // Boost / manual hold: known from now until it ends
+    const hold = this._roomPauseInfo(ents.primary);
+    const holdSegs = [];
+    if (hold && hold.until_ms > Date.now() && (hold.source === 'boost' || hold.source === 'manual_target')) holdSegs.push([data.end, Math.min(tEnd, hold.until_ms)]);
+    lanes.push({ key: 'hold', label: this._t('chart.lane_hold'), color: '#ffb74d', segs: holdSegs, future: true, target: hold?.target_c });
+    return { measured, members, setpoint, outdoor, plan, lanes, tEnd };
+  }
+  _mergeLanes(seriesList){
+    // OR of several on/off step series -> [[start, end], ...]
+    const data = this._chartData;
+    const events = [];
+    seriesList.forEach((pts, i) => pts.forEach(p => events.push({ t: p.t, i, v: p.v })));
+    events.sort((a, b) => a.t - b.t);
+    const state = new Array(seriesList.length).fill(0);
+    const segs = [];
+    let openAt = null;
+    for (const e of events) {
+      state[e.i] = e.v;
+      const any = state.some(Boolean);
+      if (any && openAt === null) openAt = e.t;
+      if (!any && openAt !== null) { segs.push([openAt, e.t]); openAt = null; }
+    }
+    if (openAt !== null) segs.push([openAt, data.end]);
+    return segs.filter(s => s[1] > s[0]);
+  }
+  _renderChart(){
+    const root = this.shadowRoot;
+    if (!root) return;
+    const set = (sel, txt) => { const el = root.querySelector(sel); if (el) el.textContent = txt; };
+    const close = root.querySelector('.chart-close');
+    if (close) { close.title = this._t('pause.close'); close.setAttribute('aria-label', this._t('pause.close')); }
+    // room picker
+    const sel = root.querySelector('.chart-room');
+    if (sel) {
+      const rooms = (this._config?.entities || []).filter(e => String(e).startsWith('climate.') || String(e).startsWith('input_number.'));
+      sel.replaceChildren(...rooms.map(r => { const o = document.createElement('option'); o.value = r; o.textContent = this._roomLabel(r); return o; }));
+      sel.value = this._chartRoom;
+      sel.onchange = () => { this._chartRoom = sel.value; this._chartReload(); };
+    }
+    set('.chart-past-label', this._t('chart.past'));
+    set('.chart-ahead-label', this._t('chart.ahead'));
+    const chips = (cls, values, cur, onPick, fmt) => {
+      const box = root.querySelector(cls);
+      if (!box) return;
+      box.replaceChildren(...values.map(v => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip small' + (v === cur ? ' sel' : '');
+        b.textContent = fmt(v);
+        b.onclick = () => onPick(v);
+        return b;
+      }));
+    };
+    const fmtH = (h) => h === 0 ? '—' : (h < 48 ? `${h}${this._t('chart.h')}` : `${h / 24}${this._t('chart.d')}`);
+    chips('.chart-past', [6, 24, 72, 168], this._chartPast, v => { this._chartPast = v; this._chartReload(); }, fmtH);
+    chips('.chart-ahead', [0, 12, 24], this._chartAhead, v => { this._chartAhead = v; this._renderChart(); }, fmtH);
+
+    const box = root.querySelector('.chart-svg');
+    const legend = root.querySelector('.chart-legend');
+    const foot = root.querySelector('.chart-foot');
+    if (!box) return;
+    if (!this._chartData) { box.innerHTML = `<div class="chart-msg">${this._t('chart.loading')}</div>`; if (legend) legend.textContent = ''; return; }
+    if (this._chartError) { box.innerHTML = `<div class="chart-msg">${this._t('chart.error')} (${this._chartError})</div>`; return; }
+
+    const S = this._chartSeries();
+    const isF = String(this._config?.temp_unit || 'C').toUpperCase() === 'F';
+    const disp = (c) => isF ? c * 1.8 + 32 : c;
+    const unit = isF ? '°F' : '°C';
+    const W = Math.max(300, Math.round(box.clientWidth || 640));
+    const left = 34, right = 8, top = 14;
+    const mainH = 190, gap = 18, outH = S.outdoor.length ? 60 : 0, laneH = 12, laneGap = 4;
+    const lanesTop = top + mainH + gap + (outH ? outH + gap : 0);
+    const H = lanesTop + S.lanes.length * (laneH + laneGap) + 22;
+    const t0 = this._chartData.start, t1 = S.tEnd, tNow = this._chartData.end;
+    const x = (t) => left + (t - t0) / (t1 - t0) * (W - left - right);
+    const vals = [...S.measured, ...S.setpoint, ...S.plan, ...S.members.flatMap(m => m.pts)].map(p => p.v).filter(v => v != null);
+    if (S.lanes.find(l => l.key === 'hold')?.target != null) vals.push(Number(S.lanes.find(l => l.key === 'hold').target));
+    let lo = Math.floor(Math.min(...vals, 18) - 0.5), hi = Math.ceil(Math.max(...vals, 21) + 0.5);
+    const y = (c) => top + (1 - (c - lo) / (hi - lo)) * mainH;
+    const ovals = S.outdoor.map(p => p.v).filter(v => v != null);
+    const olo = Math.floor(Math.min(...ovals, 0) - 1), ohi = Math.ceil(Math.max(...ovals, 5) + 1);
+    const oy = (c) => top + mainH + gap + (1 - (c - olo) / (ohi - olo)) * outH;
+    const line = (pts, fy, stepped) => {
+      let d = '', prev = null;
+      for (const p of pts) {
+        if (p.v == null || p.t < t0 || p.t > t1) { prev = null; continue; }
+        const X = x(p.t).toFixed(1), Y = fy(p.v).toFixed(1);
+        if (prev === null) d += `M${X},${Y}`;
+        else d += stepped ? `H${X}V${Y}` : `L${X},${Y}`;
+        prev = p;
+      }
+      return d;
+    };
+    const parts = [];
+    // background for the future part
+    parts.push(`<rect x="${x(tNow)}" y="${top}" width="${Math.max(0, x(t1) - x(tNow))}" height="${lanesTop - top - gap / 2}" fill="rgba(127,127,127,.08)"/>`);
+    // horizontal grid
+    const stepDeg = (hi - lo) > 8 ? 2 : 1;
+    for (let c = lo; c <= hi; c += stepDeg) {
+      parts.push(`<line x1="${left}" x2="${W - right}" y1="${y(c)}" y2="${y(c)}" class="g"/>`);
+      parts.push(`<text x="${left - 4}" y="${y(c) + 3}" class="ax" text-anchor="end">${Math.round(disp(c))}°</text>`);
+    }
+    if (outH) {
+      for (const c of [olo, Math.round((olo + ohi) / 2), ohi]) {
+        parts.push(`<line x1="${left}" x2="${W - right}" y1="${oy(c)}" y2="${oy(c)}" class="g"/>`);
+        parts.push(`<text x="${left - 4}" y="${oy(c) + 3}" class="ax" text-anchor="end">${Math.round(disp(c))}°</text>`);
+      }
+    }
+    // vertical time grid
+    const spanH = (t1 - t0) / 3600e3;
+    const tickH = spanH <= 12 ? 2 : spanH <= 36 ? 4 : spanH <= 100 ? 12 : 24;
+    const first = new Date(t0); first.setMinutes(0, 0, 0);
+    for (let t = first.getTime(); t <= t1; t += 3600e3) {
+      const d = new Date(t);
+      if (d.getHours() % tickH !== 0 || t < t0) continue;
+      const X = x(t);
+      const midnight = d.getHours() === 0;
+      parts.push(`<line x1="${X}" x2="${X}" y1="${top}" y2="${H - 18}" class="g${midnight ? ' strong' : ''}"/>`);
+      const label = (midnight && tickH >= 12) || tickH === 24
+        ? d.toLocaleDateString(this._hass?.locale?.language || undefined, { weekday: 'short', day: 'numeric' })
+        : `${String(d.getHours()).padStart(2, '0')}:00`;
+      parts.push(`<text x="${X}" y="${H - 6}" class="ax" text-anchor="middle">${label}</text>`);
+    }
+    // lines
+    const hold = S.lanes.find(l => l.key === 'hold');
+    if (hold && hold.segs.length && hold.target != null) {
+      const [a, b] = hold.segs[0];
+      parts.push(`<rect x="${x(a)}" y="${y(Number(hold.target))}" width="${Math.max(2, x(b) - x(a))}" height="${Math.max(2, y(lo) - y(Number(hold.target)))}" fill="rgba(255,152,0,.14)"/>`);
+      parts.push(`<path d="M${x(a)},${y(Number(hold.target))}H${x(b)}" class="ln hold"/>`);
+    }
+    parts.push(`<path d="${line(S.plan, y, true)}" class="ln plan"/>`);
+    parts.push(`<path d="${line(S.setpoint, y, true)}" class="ln setp"/>`);
+    for (const m of S.members) parts.push(`<path d="${line(m.pts, y, false)}" class="ln member"/>`);
+    parts.push(`<path d="${line(S.measured, y, false)}" class="ln meas"/>`);
+    if (outH) parts.push(`<path d="${line(S.outdoor, oy, false)}" class="ln outd"/>`);
+    // lanes
+    S.lanes.forEach((lane, i) => {
+      const ly = lanesTop + i * (laneH + laneGap);
+      parts.push(`<rect x="${left}" y="${ly}" width="${W - left - right}" height="${laneH}" rx="3" class="lane-bg"/>`);
+      for (const [a, b] of lane.segs) {
+        const xa = Math.max(left, x(a)), xb = Math.min(W - right, x(b));
+        if (xb > xa) parts.push(`<rect x="${xa}" y="${ly}" width="${Math.max(1.5, xb - xa)}" height="${laneH}" rx="2" fill="${lane.color}" opacity="${lane.future ? .7 : .9}"/>`);
+      }
+      parts.push(`<text x="${left + 4}" y="${ly + laneH - 3}" class="lane-t">${lane.label}</text>`);
+    });
+    // now marker
+    parts.push(`<line x1="${x(tNow)}" x2="${x(tNow)}" y1="${top - 6}" y2="${H - 18}" class="nowl"/>`);
+    parts.push(`<text x="${x(tNow)}" y="${top - 6}" class="ax now-t" text-anchor="middle">${this._t('chart.now')}</text>`);
+    parts.push(`<line class="hover-l" x1="0" x2="0" y1="${top}" y2="${H - 18}" style="display:none"/>`);
+    parts.push(`<rect class="hit" x="${left}" y="0" width="${W - left - right}" height="${H}" fill="transparent"/>`);
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${parts.join('')}</svg>`;
+
+    // legend
+    if (legend) {
+      const items = [['meas', this._t('chart.measured')], ['setp', this._t('chart.setpoint')], ['plan', this._t('chart.plan')]];
+      if (S.members.length) items.push(['member', this._t('chart.radiators')]);
+      if (outH) items.push(['outd', this._t('chart.outdoor')]);
+      legend.innerHTML = items.map(([c, l]) => `<span class="lg"><i class="sw ${c}"></i>${l}</span>`).join('');
+    }
+    if (foot) {
+      const hs = this._heatStatus?.rooms?.[this._chartRoom];
+      foot.textContent = hs ? this._t('chart.source_now').replace('{src}', hs.source === 'alt' ? this._prettyName(hs.active || '') : this._t('heat.gas')) : '';
+    }
+
+    // hover tooltip
+    const svg = box.querySelector('svg');
+    const tip = root.querySelector('.chart-tip');
+    const hit = box.querySelector('.hit');
+    const hl = box.querySelector('.hover-l');
+    const valueAt = (pts, t) => { let v = null; for (const p of pts) { if (p.t > t) break; v = p.v; } return v; };
+    const f1 = (c) => c == null ? '–' : `${String(Math.round(disp(c) * 10) / 10).replace('.', ',')} ${unit}`;
+    const move = (ev) => {
+      const r = svg.getBoundingClientRect();
+      const px = (ev.clientX - r.left) * (W / r.width);
+      const t = t0 + (px - left) / (W - left - right) * (t1 - t0);
+      if (t < t0 || t > t1) return;
+      hl.setAttribute('x1', px); hl.setAttribute('x2', px); hl.style.display = '';
+      const d = new Date(t);
+      const rows = [];
+      if (t <= tNow) {
+        rows.push([this._t('chart.measured'), f1(valueAt(S.measured, t))]);
+        rows.push([this._t('chart.setpoint'), f1(valueAt(S.setpoint, t))]);
+      }
+      rows.push([this._t('chart.plan'), f1(valueAt(S.plan, t))]);
+      if (outH && t <= tNow) rows.push([this._t('chart.outdoor'), f1(valueAt(S.outdoor, t))]);
+      for (const lane of S.lanes) if (lane.segs.some(([a, b]) => t >= a && t <= b)) rows.push([lane.label, '●']);
+      tip.innerHTML = `<b>${d.toLocaleString(this._hass?.locale?.language || undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' })}</b>` +
+        rows.map(([k, v]) => `<div><span>${k}</span><span>${v}</span></div>`).join('');
+      tip.style.display = 'block';
+      const bx = box.getBoundingClientRect();
+      const tx = ev.clientX - bx.left;
+      tip.style.left = `${Math.min(bx.width - 170, Math.max(0, tx + 12))}px`;
+      tip.style.top = `8px`;
+    };
+    hit.addEventListener('pointermove', move);
+    hit.addEventListener('pointerdown', move);
+    hit.addEventListener('pointerleave', () => { tip.style.display = 'none'; hl.style.display = 'none'; });
+  }
+  // --- Heat sources: cheapest of gas boiler, heat pump / airco, electric heater ---
+  _heatDefaults(){
+    return {
+      enabled: false,
+      gas_price: { mode: 'fixed', value: 1.30, entity: '' },
+      power_price: { mode: 'fixed', value: 0.25, entity: '' },
+      gas_kwh_per_m3: 9.77, boiler_efficiency: 0.9,
+      outdoor_sensor: '', margin_pct: 5, backup_offset: 2, rooms: {},
+    };
+  }
+  _openHeat(){
+    try {
+      const cur = this._config?.heat_sources && typeof this._config.heat_sources === 'object' ? this._config.heat_sources : {};
+      const d = this._heatDefaults();
+      this._heatDraft = JSON.parse(JSON.stringify({ ...d, ...cur,
+        gas_price: { ...d.gas_price, ...(cur.gas_price || {}) }, power_price: { ...d.power_price, ...(cur.power_price || {}) } }));
+      if (!this._heatDraft.outdoor_sensor) this._heatDraft.outdoor_sensor = this._guessOutdoorSensor();
+      const ov = this.shadowRoot && this.shadowRoot.querySelector('.overlay-heat');
+      if (ov) ov.classList.add('open');
+      this._renderHeat();
+      this._apiFetchState?.().then(api => { if (api?.heat_status) { this._heatStatus = api.heat_status; this._renderHeatSummary(); } }).catch(() => {});
+    } catch {}
+  }
+  _heatPrice(spec){
+    if (!spec) return null;
+    if (spec.mode === 'entity') {
+      const st = this._hass?.states?.[spec.entity];
+      if (!st) return null;
+      let v = Number(st.state);
+      if (!Number.isFinite(v)) return null;
+      const u = String(st.attributes?.unit_of_measurement || '').toLowerCase();
+      if (u.includes('ct') || u.includes('cent')) v /= 100;
+      if (u.includes('mwh')) v /= 1000;
+      return v;
+    }
+    const v = Number(spec.value);
+    return Number.isFinite(v) ? v : null;
+  }
+  _heatCop(points, out){
+    let pts = (Array.isArray(points) && points.length ? points : [[-7, 2.2], [2, 3.0], [7, 3.8], [12, 4.5]])
+      .map(p => [Number(p[0]), Number(p[1])]).filter(p => Number.isFinite(p[0]) && p[1] > 0).sort((a, b) => a[0] - b[0]);
+    if (!pts.length) return 3;
+    if (out == null) out = 7;
+    if (out <= pts[0][0]) return pts[0][1];
+    if (out >= pts[pts.length - 1][0]) return pts[pts.length - 1][1];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [t1, c1] = pts[i], [t2, c2] = pts[i + 1];
+      if (out >= t1 && out <= t2) return t2 > t1 ? c1 + (c2 - c1) * (out - t1) / (t2 - t1) : c1;
+    }
+    return pts[pts.length - 1][1];
+  }
+  _renderHeatSummary(){
+    const root = this.shadowRoot;
+    const box = root && root.querySelector('.heat-summary');
+    if (!box || !this._heatDraft) return;
+    const d = this._heatDraft;
+    const eur = (v, digits = 3) => v == null ? '–' : '€ ' + v.toFixed(digits).replace('.', ',');
+    const gas = this._heatPrice(d.gas_price), power = this._heatPrice(d.power_price);
+    const outC = this._chartTempC(this._hass?.states?.[d.outdoor_sensor]?.state, this._hass?.states?.[d.outdoor_sensor]?.attributes?.unit_of_measurement || '°C');
+    const gasHeat = gas == null ? null : gas / (Math.max(0.1, Number(d.gas_kwh_per_m3) || 9.77) * Math.max(0.3, Math.min(1.1, Number(d.boiler_efficiency) || 0.9)));
+    const rows = [
+      `<div class="hs-row"><span>${this._t('heat.gas_heat')}</span><b>${eur(gasHeat)} / kWh</b></div>`,
+      `<div class="hs-row sub"><span>${this._t('heat.gas_price')}: ${eur(gas, 2)} / m³ · ${this._t('heat.power_price')}: ${eur(power)} / kWh${outC != null ? ` · ${this._t('chart.outdoor')}: ${String(Math.round(outC * 10) / 10).replace('.', ',')} °C` : ''}</span></div>`,
+    ];
+    const status = this._heatStatus?.rooms || {};
+    for (const [room, devices] of Object.entries(d.rooms || {})) {
+      for (const dev of (devices || [])) {
+        if (!dev?.entity) continue;
+        const cop = dev.kind === 'electric' ? 1 : this._heatCop(dev.cop, outC);
+        const cost = power == null ? null : power / cop;
+        const cheaper = cost != null && gasHeat != null && cost < gasHeat * (1 - (Number(d.margin_pct) || 0) / 100);
+        const active = status[room]?.active === dev.entity;
+        rows.push(`<div class="hs-row"><span>${this._prettyName(dev.entity)} <small>(${this._roomLabel(room)}${dev.kind === 'electric' ? '' : `, COP ${cop.toFixed(1).replace('.', ',')}`})</small></span>` +
+          `<b class="${cheaper ? 'good' : ''}">${eur(cost)} / kWh${active ? ' · ' + this._t('heat.active') : (cheaper ? ' · ' + this._t('heat.cheaper') : '')}</b></div>`);
+      }
+    }
+    if (!Object.values(d.rooms || {}).some(list => (list || []).some(x => x?.entity))) rows.push(`<div class="hs-row sub"><span>${this._t('heat.no_devices')}</span></div>`);
+    box.innerHTML = rows.join('');
+  }
+  _renderHeat(){
+    const root = this.shadowRoot;
+    if (!root || !this._heatDraft) return;
+    const d = this._heatDraft;
+    const t = (k) => this._t(k);
+    const body = root.querySelector('.heat-body');
+    if (!body) return;
+    const set = (sel, txt) => { const el = root.querySelector(sel); if (el) el.textContent = txt; };
+    set('.heat-title', t('heat.title'));
+    set('.heat-sub', t('heat.explain'));
+    set('.heat-save', t('ui.save') || 'Save');
+    set('.heat-cancel', t('heat.cancel'));
+    const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+    const num = (value, step, onInput, attrs = {}) => {
+      const i = el('input', 'settings-input');
+      i.type = 'number'; i.step = step; i.value = value ?? '';
+      for (const [k, v] of Object.entries(attrs)) i.setAttribute(k, v);
+      i.addEventListener('input', () => { const v = Number(i.value); if (i.value !== '' && Number.isFinite(v)) { onInput(v); this._renderHeatSummary(); } });
+      return i;
+    };
+    const field = (label, control, hint) => { const f = el('label', 'hfield'); f.append(el('span', 'hlabel', label), control); if (hint) f.append(el('small', 'hhint', hint)); return f; };
+    const picker = (domains, value, onPick, label) => {
+      const p = document.createElement('tt-entity-picker');
+      p.setAttribute('include-domains', JSON.stringify(domains));
+      if (label) p.setAttribute('label', label);
+      p.hass = this._hass; p.value = value || '';
+      p.addEventListener('value-changed', (e) => { onPick(String(e.detail?.value || '')); this._renderHeatSummary(); });
+      return p;
+    };
+    const select = (options, value, onChange) => {
+      const s = el('select', 'settings-input');
+      for (const [v, l] of options) { const o = el('option', null, l); o.value = v; s.append(o); }
+      s.value = value; s.addEventListener('change', () => onChange(s.value));
+      return s;
+    };
+    const section = (title) => { const s = el('div', 'hsec'); s.append(el('div', 'sheet-label', title)); body.append(s); return s; };
+    body.replaceChildren();
+
+    // on/off
+    const tog = el('label', 'htoggle');
+    const cb = el('input'); cb.type = 'checkbox'; cb.checked = !!d.enabled;
+    cb.addEventListener('change', () => { d.enabled = cb.checked; });
+    tog.append(cb, el('span', null, t('heat.enable')));
+    body.append(tog);
+    const summary = el('div', 'heat-summary');
+    body.append(summary);
+
+    // prices
+    const prices = section(t('heat.prices'));
+    const priceEditor = (key, label, unitLabel, step) => {
+      const spec = d[key];
+      const wrap = el('div', 'hprice');
+      const modeSel = select([['fixed', t('heat.fixed')], ['entity', t('heat.sensor')]], spec.mode, (v) => { spec.mode = v; this._renderHeat(); });
+      wrap.append(field(label, modeSel));
+      if (spec.mode === 'entity') wrap.append(field(unitLabel, picker(['sensor', 'input_number'], spec.entity, (v) => { spec.entity = v; })));
+      else wrap.append(field(unitLabel, num(spec.value, step, (v) => { spec.value = v; }, { min: 0 })));
+      prices.append(wrap);
+    };
+    priceEditor('gas_price', t('heat.gas_price'), '€ / m³', '0.01');
+    priceEditor('power_price', t('heat.power_price'), '€ / kWh', '0.001');
+    prices.append(el('small', 'hhint', t('heat.price_hint')));
+
+    // boiler & outdoor
+    const boiler = section(t('heat.boiler'));
+    const g2 = el('div', 'hgrid');
+    g2.append(field(t('heat.efficiency'), num(Math.round((Number(d.boiler_efficiency) || 0.9) * 100), '1', (v) => { d.boiler_efficiency = v / 100; }, { min: 30, max: 110 })),
+      field(t('heat.kwh_m3'), num(d.gas_kwh_per_m3, '0.01', (v) => { d.gas_kwh_per_m3 = v; }, { min: 5, max: 15 })));
+    boiler.append(g2);
+    boiler.append(field(t('heat.outdoor'), picker(['sensor'], d.outdoor_sensor, (v) => { d.outdoor_sensor = v; }), t('heat.outdoor_hint')));
+
+    // rooms
+    const rooms = section(t('heat.rooms'));
+    rooms.append(el('small', 'hhint', t('heat.rooms_hint')));
+    const roomList = (this._config?.entities || []).filter(e => String(e).startsWith('climate.'));
+    for (const room of roomList) {
+      const card = el('div', 'hroom');
+      card.append(el('div', 'hroom-name', this._roomLabel(room)));
+      const list = Array.isArray(d.rooms[room]) ? d.rooms[room] : [];
+      list.forEach((dev, idx) => {
+        const dv = el('div', 'hdev');
+        dv.append(field(t('heat.device'), picker(['climate', 'switch', 'input_boolean'], dev.entity, (v) => { dev.entity = v; })));
+        const g = el('div', 'hgrid');
+        g.append(field(t('heat.kind'), select([['heat_pump', t('heat.kind_hp')], ['electric', t('heat.kind_el')]], dev.kind || 'heat_pump', (v) => { dev.kind = v; this._renderHeat(); })),
+          field(t('heat.mode'), select([['auto', t('heat.mode_auto')], ['always', t('heat.mode_always')], ['never', t('heat.mode_never')]], dev.mode || 'auto', (v) => { dev.mode = v; this._renderHeatSummary(); })));
+        dv.append(g);
+        if ((dev.kind || 'heat_pump') === 'heat_pump') {
+          if (!Array.isArray(dev.cop) || dev.cop.length !== 4) dev.cop = [[-7, 2.2], [2, 3.0], [7, 3.8], [12, 4.5]];
+          const cg = el('div', 'hcop');
+          cg.append(el('span', 'hlabel', t('heat.cop')));
+          const row = el('div', 'hcop-row');
+          dev.cop.forEach((pt) => {
+            const c = el('label', 'hcop-cell');
+            c.append(el('small', null, `${pt[0]} °C`), num(pt[1], '0.1', (v) => { pt[1] = v; }, { min: 0.5, max: 8 }));
+            row.append(c);
+          });
+          cg.append(row, el('small', 'hhint', t('heat.cop_hint')));
+          dv.append(cg);
+          dv.append(field(t('heat.min_outdoor'), num(dev.min_outdoor ?? -10, '1', (v) => { dev.min_outdoor = v; }, { min: -30, max: 15 })));
+        }
+        const del = el('button', 'btn ghost hdel', t('heat.remove'));
+        del.type = 'button';
+        del.addEventListener('click', () => { list.splice(idx, 1); d.rooms[room] = list; this._renderHeat(); });
+        dv.append(del);
+        card.append(dv);
+      });
+      const add = el('button', 'btn ghost hadd', '+ ' + t('heat.add'));
+      add.type = 'button';
+      add.addEventListener('click', () => { d.rooms[room] = [...list, { entity: '', kind: 'heat_pump', mode: 'auto', cop: [[-7, 2.2], [2, 3.0], [7, 3.8], [12, 4.5]], min_outdoor: -10 }]; this._renderHeat(); });
+      card.append(add);
+      rooms.append(card);
+    }
+
+    // advanced
+    const adv = section(t('heat.advanced'));
+    const g3 = el('div', 'hgrid');
+    g3.append(field(t('heat.margin'), num(d.margin_pct, '1', (v) => { d.margin_pct = v; }, { min: 0, max: 50 }), t('heat.margin_hint')),
+      field(t('heat.backup'), num(d.backup_offset, '0.5', (v) => { d.backup_offset = v; }, { min: 0, max: 10 }), t('heat.backup_hint')));
+    adv.append(g3);
+    this._renderHeatSummary();
+  }
+  async _saveHeat(){
+    try {
+      const d = JSON.parse(JSON.stringify(this._heatDraft || {}));
+      for (const room of Object.keys(d.rooms || {})) {
+        d.rooms[room] = (d.rooms[room] || []).filter(x => x && x.entity);
+        if (!d.rooms[room].length) delete d.rooms[room];
+      }
+      this._config.heat_sources = d;
+      if (this._hass && this._config?.storage_enabled) {
+        const iid = this._instanceId ? this._instanceId() : 'default';
+        await this._hass.callService('thermostat_timeline', 'set_store', { instance_id: iid, activate: false, settings: { heat_sources: d } });
+      }
+      this.shadowRoot.querySelector('.overlay-heat')?.classList.remove('open');
+      setTimeout(() => { this._syncRoomPauseNow(); }, 1500);
+    } catch (e) {
+      try { alert(String(e?.message || e)); } catch {}
+    }
+  }
   async _syncRoomPauseNow(){
     // Pull the room pauses straight after a boost change, so the card shows it immediately.
     try {
@@ -9414,6 +10073,71 @@ class ThermostatTimelineCard extends HTMLElement {
   .row-pause-btn{ width:22px; height:22px; border-radius:999px; border:1px solid var(--divider-color); background: transparent; color: var(--secondary-text-color); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
   .row-pause-btn ha-icon{ --mdc-icon-size: 16px; }
   .row-pause-btn.paused{ background: var(--error-color); border-color: var(--error-color); color: var(--text-primary-color, #fff); }
+  .overlay .modal.modal-chart{ width:min(96vw, 1000px); max-width:1000px; box-sizing:border-box; border-radius:16px; padding:14px; background: var(--card-background-color); color: var(--primary-text-color); border:1px solid var(--divider-color); display:grid; gap:10px; max-height:94vh; overflow:auto; }
+  .chart-head{ display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; }
+  .chart-head .chart-room{ font: inherit; font-size:1.05rem; font-weight:600; max-width:100%; background: transparent; color: var(--primary-text-color); border:1px solid var(--divider-color); border-radius:10px; padding:6px 8px; }
+  .chart-head .chart-room option{ background: var(--card-background-color); color: var(--primary-text-color); }
+  .chart-ranges{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+  .chart-rl{ font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; color: var(--secondary-text-color); }
+  .chart-chips{ display:flex; gap:4px; }
+  .chip.small{ min-height:28px; padding:2px 10px; font-size:.8rem; border-radius:999px; }
+  .chart-body{ position:relative; }
+  .chart-svg svg{ display:block; width:100%; height:auto; touch-action: pan-y; }
+  .chart-svg .g{ stroke: var(--divider-color); stroke-width:1; }
+  .chart-svg .g.strong{ stroke: var(--secondary-text-color); stroke-opacity:.5; }
+  .chart-svg .ax{ fill: var(--secondary-text-color); font-size:10px; }
+  .chart-svg .now-t{ fill: var(--primary-text-color); font-weight:700; }
+  .chart-svg .ln{ fill:none; stroke-width:2; stroke-linejoin:round; }
+  .chart-svg .ln.meas{ stroke:#4fc3f7; stroke-width:2.2; }
+  .chart-svg .ln.member{ stroke:#4fc3f7; stroke-width:1.2; stroke-opacity:.45; }
+  .chart-svg .ln.setp{ stroke:#fdd835; stroke-width:2.4; }
+  .chart-svg .ln.plan{ stroke: var(--primary-text-color); stroke-opacity:.55; stroke-dasharray:4 3; stroke-width:1.4; }
+  .chart-svg .ln.outd{ stroke:#b39ddb; }
+  .chart-svg .ln.hold{ stroke:#ff9800; stroke-width:2.4; }
+  .chart-svg .nowl{ stroke: var(--primary-text-color); stroke-dasharray:3 3; stroke-opacity:.7; }
+  .chart-svg .hover-l{ stroke: var(--primary-text-color); stroke-opacity:.35; }
+  .chart-svg .lane-bg{ fill: var(--secondary-background-color, rgba(127,127,127,.12)); }
+  .chart-svg .lane-t{ fill: var(--primary-text-color); font-size:9px; font-weight:600; paint-order: stroke; stroke: var(--card-background-color); stroke-width:3px; }
+  .chart-msg{ padding:40px 10px; text-align:center; color: var(--secondary-text-color); }
+  .chart-tip{ display:none; position:absolute; min-width:150px; pointer-events:none; background: var(--card-background-color); border:1px solid var(--divider-color); border-radius:10px; padding:8px 10px; font-size:.78rem; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+  .chart-tip div{ display:flex; justify-content:space-between; gap:12px; }
+  .chart-tip b{ display:block; margin-bottom:4px; }
+  .chart-legend{ display:flex; flex-wrap:wrap; gap:6px 14px; font-size:.78rem; color: var(--secondary-text-color); }
+  .chart-legend .lg{ display:inline-flex; align-items:center; gap:6px; }
+  .chart-legend .sw{ width:18px; height:0; border-top:3px solid; display:inline-block; }
+  .chart-legend .sw.meas{ border-color:#4fc3f7; } .chart-legend .sw.setp{ border-color:#fdd835; }
+  .chart-legend .sw.plan{ border-top-style:dashed; border-color: var(--primary-text-color); }
+  .chart-legend .sw.member{ border-color: rgba(79,195,247,.45); } .chart-legend .sw.outd{ border-color:#b39ddb; }
+  .chart-foot{ font-size:.8rem; color: var(--secondary-text-color); }
+  .chart-foot:empty{ display:none; }
+  .overlay-heat{ z-index:2147483001; }
+  .overlay .modal.modal-heat{ width:min(96vw, 560px); max-width:560px; max-height:92vh; overflow:auto; }
+  .heat-body{ display:grid; gap:14px; }
+  .modal-heat input.settings-input, .modal-heat select.settings-input, .modal-chart select.settings-input{ font: inherit; font-size:.9rem; background: var(--card-background-color); color: var(--primary-text-color); border:1px solid var(--divider-color); border-radius:8px; padding:7px 8px; box-sizing:border-box; width:100%; min-width:0; }
+  .modal-heat tt-entity-picker{ display:block; min-width:0; max-width:100%; overflow:hidden; }
+  .hsec{ display:grid; gap:8px; }
+  .htoggle{ display:flex; align-items:center; gap:10px; font-weight:600; }
+  .htoggle input{ width:18px; height:18px; }
+  .heat-summary{ display:grid; gap:4px; padding:10px 12px; border-radius:12px; background: var(--secondary-background-color, rgba(127,127,127,.12)); font-size:.88rem; }
+  .hs-row{ display:flex; justify-content:space-between; gap:10px; }
+  .hs-row.sub{ color: var(--secondary-text-color); font-size:.8rem; }
+  .hs-row small{ color: var(--secondary-text-color); }
+  .hs-row b.good{ color: var(--success-color, #43a047); }
+  .hfield{ display:grid; gap:4px; min-width:0; }
+  .hlabel{ font-size:.82rem; color: var(--secondary-text-color); }
+  .hhint{ font-size:.75rem; color: var(--secondary-text-color); line-height:1.3; }
+  .hgrid{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+  .hprice{ display:grid; grid-template-columns: 1fr 1.4fr; gap:8px; align-items:end; }
+  .hroom{ border:1px solid var(--divider-color); border-radius:12px; padding:10px; display:grid; gap:8px; }
+  .hroom-name{ font-weight:600; }
+  .hdev{ display:grid; gap:8px; padding:10px; border-radius:10px; background: var(--secondary-background-color, rgba(127,127,127,.10)); }
+  .hcop{ display:grid; gap:4px; }
+  .hcop-row{ display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; }
+  .hcop-cell{ display:grid; gap:2px; text-align:center; font-size:.75rem; color: var(--secondary-text-color); }
+  .hcop-cell input{ text-align:center; min-width:0; }
+  .hadd, .hdel{ justify-self:start; }
+  .heat-actions{ display:flex; justify-content:flex-end; gap:8px; position:sticky; bottom:-16px; background: var(--card-background-color); padding-top:8px; }
+  .pause-btn.heat-head-btn{ background: var(--card-background-color); color: var(--success-color, #43a047); border-color: var(--success-color, #43a047); }
   .hold-pill{ display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 10px 0 6px; border-radius:999px; border:none; cursor:pointer; font: inherit; font-size:.78rem; font-weight:600; white-space:nowrap; }
   .hold-pill ha-icon{ --mdc-icon-size:15px; }
   .hold-pill.boost{ background: var(--warning-color, #ff9800); color: #fff; }
@@ -9567,7 +10291,7 @@ class ThermostatTimelineCard extends HTMLElement {
   .profiles-btn.success{ background: var(--success-color, #4caf50); color: var(--text-primary-color, #fff); border-color: var(--success-color, #4caf50); }
   .prof-toolbar .btn ha-icon{ --mdc-icon-size: 16px; }
   .prof-toolbar .btn.primary{ background: var(--primary-color) !important; color: var(--text-primary-color, #fff) !important; border-color: var(--primary-color) !important; }
-        .tt-sheet{ width:min(92vw, 380px); max-width:380px; box-sizing:border-box; border-radius:16px; padding:16px; background: var(--card-background-color); color: var(--primary-text-color); border:1px solid var(--divider-color); display:grid; gap:12px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+        .overlay .modal.tt-sheet{ width:min(92vw, 400px); max-width:400px; box-sizing:border-box; border-radius:16px; padding:16px; background: var(--card-background-color); color: var(--primary-text-color); border:1px solid var(--divider-color); display:grid; gap:12px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
         .tt-sheet h3{ margin:0; font-size:1.1rem; line-height:1.3; }
         .sheet-head{ display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:start; }
         .sheet-icon{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center; background: color-mix(in srgb, var(--primary-color) 18%, transparent); color: var(--primary-color); }
@@ -10011,6 +10735,41 @@ class ThermostatTimelineCard extends HTMLElement {
             <button type="button" class="btn primary wide boost-start"></button>
           </div>
         </div>
+        <!-- Room chart -->
+        <div class="overlay overlay-chart" part="overlay">
+          <div class="modal modal-chart" role="dialog" aria-modal="true">
+            <div class="chart-head">
+              <span class="sheet-icon"><ha-icon icon="mdi:chart-line"></ha-icon></span>
+              <select class="settings-input chart-room"></select>
+              <button type="button" class="sheet-x chart-close"><ha-icon icon="mdi:close"></ha-icon></button>
+            </div>
+            <div class="chart-ranges">
+              <span class="chart-rl chart-past-label"></span><div class="chart-chips chart-past"></div>
+              <span class="chart-rl chart-ahead-label"></span><div class="chart-chips chart-ahead"></div>
+            </div>
+            <div class="chart-body"><div class="chart-svg"></div><div class="chart-tip"></div></div>
+            <div class="chart-legend"></div>
+            <div class="chart-foot"></div>
+          </div>
+        </div>
+        <!-- Heat sources & costs -->
+        <div class="overlay overlay-heat" part="overlay">
+          <div class="modal modal-heat tt-sheet" role="dialog" aria-modal="true">
+            <div class="sheet-head">
+              <span class="sheet-icon heat-icon"><ha-icon icon="mdi:cash-multiple"></ha-icon></span>
+              <div class="sheet-headtext">
+                <h3 class="heat-title"></h3>
+                <div class="sheet-sub heat-sub"></div>
+              </div>
+              <button type="button" class="sheet-x heat-close"><ha-icon icon="mdi:close"></ha-icon></button>
+            </div>
+            <div class="heat-body"></div>
+            <div class="heat-actions">
+              <button type="button" class="btn ghost heat-cancel"></button>
+              <button type="button" class="btn primary heat-save"></button>
+            </div>
+          </div>
+        </div>
         <!-- In-card Settings (moved out of HA editor over time) -->
         <div class="overlay overlay-settings" part="overlay">
           <div class="modal modal-settings" role="dialog" aria-modal="true">
@@ -10357,6 +11116,13 @@ class ThermostatTimelineCard extends HTMLElement {
       this.shadowRoot.querySelector('.boost-close')?.addEventListener('click', ()=>{ bov?.classList.remove('open'); this._boostTargetEid = null; });
       bov?.addEventListener('click', (ev)=>{ if (ev.target === bov) { bov.classList.remove('open'); this._boostTargetEid = null; } });
       ov?.addEventListener('click', (ev)=>{ if (ev.target === ov) { ov.classList.remove('open'); this._pauseRoomTargetEid = null; } });
+      const hov = this.shadowRoot.querySelector('.overlay-heat');
+      this.shadowRoot.querySelector('.heat-close')?.addEventListener('click', ()=>{ hov?.classList.remove('open'); });
+      this.shadowRoot.querySelector('.heat-cancel')?.addEventListener('click', ()=>{ hov?.classList.remove('open'); });
+      this.shadowRoot.querySelector('.heat-save')?.addEventListener('click', ()=>{ this._saveHeat(); });
+      const cov = this.shadowRoot.querySelector('.overlay-chart');
+      this.shadowRoot.querySelector('.chart-close')?.addEventListener('click', ()=>{ cov?.classList.remove('open'); });
+      cov?.addEventListener('click', (ev)=>{ if (ev.target === cov) cov.classList.remove('open'); });
     } catch {}
   }
 
@@ -11234,6 +12000,14 @@ class ThermostatTimelineCard extends HTMLElement {
             bb.innerHTML = '<ha-icon icon="mdi:fire"></ha-icon>';
             bb.addEventListener('click', ()=>{ this._openBoost(null); });
             wrap.append(bb);
+            if (this._config?.heat_sources?.enabled) {
+              const hb = document.createElement('button');
+              hb.className = 'pause-btn heat-head-btn';
+              hb.title = this._t('heat.title');
+              hb.innerHTML = '<ha-icon icon="mdi:cash-multiple"></ha-icon>';
+              hb.addEventListener('click', ()=>{ this._openHeat(); });
+              wrap.append(hb);
+            }
           }
           // Build optional bubble to the left
           const paused = this._isPaused();
@@ -11795,6 +12569,13 @@ class ThermostatTimelineCard extends HTMLElement {
           } catch {}
         });
         pauseWrap.append(boostBtn);
+        const chartBtn = document.createElement('button');
+        chartBtn.type = 'button';
+        chartBtn.className = 'row-pause-btn row-chart-btn';
+        chartBtn.title = this._t('chart.tooltip');
+        chartBtn.innerHTML = '<ha-icon icon="mdi:chart-line"></ha-icon>';
+        chartBtn.addEventListener('click', (ev) => { ev.stopPropagation(); this._openChart(eid); });
+        if (this._hass?.callWS) pauseWrap.append(chartBtn);
         meta.append(pauseWrap);
         // Clearly visible status pill for a running boost or a manual hold
         const hold = this._roomPauseInfo(eid);
@@ -16217,6 +16998,13 @@ class ThermostatTimelineCard extends HTMLElement {
             <div class="setting boiler-manual-setting"><div><label for="boiler-manual">Use manual thermostat targets for boiler demand</label>
               <div class="desc">Shared storage uses the room's manual target until its next schedule boundary.</div></div>
               <input id="boiler-manual" type="checkbox"></div>
+            <div class="setting sp-heat-setting">
+              <div class="text">
+                <div class="title sp-heat-title"></div>
+                <div class="desc sp-heat-desc"></div>
+              </div>
+              <button type="button" class="btn primary sp-heat-open"></button>
+            </div>
             <div class="setting sp-boiler-multi-setting">
               <div class="text">
                 <div class="title sp-boiler-multi-title"></div>
@@ -16302,6 +17090,12 @@ class ThermostatTimelineCard extends HTMLElement {
       manual.checked = !!d.boiler_manual_targets;
       manual.disabled = !this._config.storage_enabled;
       manual.onchange = () => { d.boiler_manual_targets = manual.checked; };
+      try {
+        const ht = page.querySelector('.sp-heat-title'); if (ht) ht.textContent = this._t('heat.title');
+        const hd = page.querySelector('.sp-heat-desc'); if (hd) hd.textContent = this._t('heat.explain');
+        const hb = page.querySelector('.sp-heat-open');
+        if (hb) { hb.textContent = this._t('heat.open'); hb.disabled = !this._config.storage_enabled; hb.onclick = () => this._openHeat(); }
+      } catch {}
       const multiOn = !!d.boiler_multi_enabled;
       try {
         const switchRow = q('.overlay-settings .sp-boiler-switch-setting');
