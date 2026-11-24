@@ -30,6 +30,7 @@ from .const import DOMAIN, STORAGE_KEY, STORAGE_VERSION, SIGNAL_UPDATED, BACKUP_
 
 from .seasonal_sources import SeasonalSources
 from .thermal import ThermalControl
+from .heat_source import HeatSources
 from .room_air import RoomAir, adjustment
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -167,6 +168,7 @@ def build_state_payload(hass: HomeAssistant, versions_only: bool = False, instan
     payload.update({
         "air_status": data["room_air"].status.get(req_iid, {}) if data.get("room_air") else {},
         "thermal_status": data["thermal"].status.get(req_iid, {}) if data.get("thermal") else {},
+        "heat_status": data["heat_sources"].status.get(req_iid, {}) if data.get("heat_sources") else {},
         # Return data for the requested instance (or the active instance when not specified).
         "schedules": inst.get("schedules", {}) if isinstance(inst, dict) else data.get("schedules", {}),
         "weekdays": inst.get("weekdays", {}) if isinstance(inst, dict) else data.get("weekday_schedules", {}),
@@ -1446,6 +1448,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     bkm = BackupManager(hass, backup_cb=backup_now)
     hass.data[DOMAIN]["backup_manager"] = bkm
     await bkm.async_start()
+    heat_sources = HeatSources(hass, entry, mgr)
+    hass.data[DOMAIN]["heat_sources"] = heat_sources
+    heat_sources.start()
     thermal = ThermalControl(hass, entry, mgr)
     hass.data[DOMAIN]["thermal"] = thermal
     await thermal.start()
@@ -2888,7 +2893,7 @@ class AutoApplyManager:
                 ha_is_f = self._ha_uses_fahrenheit()
                 target_c = _f_to_c(temperature) if ha_is_f else float(temperature)
                 scheduled_c = self._clamp_climate_setpoint_c(
-                    self._stored_setpoint_c(desired, settings), state.attributes, ha_is_f
+                    self._stored_setpoint_c(desired, settings) - self._backup_offset_c(primary), state.attributes, ha_is_f
                 )
                 pauses = dict(settings.get("room_pause") or {})
                 existing = pauses.get(primary) or {}
@@ -3142,7 +3147,27 @@ class AutoApplyManager:
     def _f_to_c(v: float) -> float:
         return (float(v) - 32.0) * 5.0 / 9.0
 
+    def _backup_offset_c(self, primary) -> float:
+        """Degrees radiators stay below target while a cheaper source (heat pump/electric) heats the room."""
+        try:
+            hs = self.hass.data.get(DOMAIN, {}).get("heat_sources")
+        except Exception:
+            hs = None
+        if hs is None:
+            return 0.0
+        try:
+            return float(hs.backup_offset_c(self._instance_id, primary))
+        except Exception:
+            return 0.0
+
     def _boiler_target_c(self, eid, schedules, settings, now_min):
+        """Target used for boiler demand: the room target, minus the back-up offset when another source heats."""
+        target = self._room_target_c(eid, schedules, settings, now_min)
+        if target is None:
+            return None
+        return target - self._backup_offset_c(self._primary_of(eid, schedules, settings))
+
+    def _room_target_c(self, eid, schedules, settings, now_min):
         if settings.get("boiler_manual_targets"):
             primary = eid
             for room, members in (settings.get("merges") or {}).items():
@@ -3930,6 +3955,10 @@ class AutoApplyManager:
                 return _c_to_f(val_c) if ha_is_f else float(val_c)
 
             desired_c = self._stored_setpoint_c(desired, settings or {})
+            try:
+                desired_c -= self._backup_offset_c(self._primary_of(eid, schedules, settings or {}))
+            except Exception:
+                pass
             raised_c = self._boiler_raised_c.get(eid)
             if raised_c is not None:
                 # This room thermostat is also the boiler: keep it firing while other rooms ask for heat.

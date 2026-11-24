@@ -51,6 +51,7 @@ class SetupEntryTests(unittest.IsolatedAsyncioTestCase):
             "MultiInstancePresenceSensorManager": startup_manager,
             "BackupManager": startup_manager,
             "ThermalControl": Mock(return_value=SimpleNamespace(start=AsyncMock())),
+            "HeatSources": Mock(return_value=SimpleNamespace(start=Mock())),
         }
         exec(compile(tree, str(path), "exec"), namespace)
 

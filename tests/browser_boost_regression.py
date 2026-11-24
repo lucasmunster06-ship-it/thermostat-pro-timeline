@@ -49,17 +49,20 @@ try:
           // open room boost for the bedroom (second row)
           btns[1].click();
           const sr = card.shadowRoot;
-          out.open = sr.querySelector('.overlay-pause').classList.contains('open');
-          out.status = sr.querySelector('.boost-status').textContent;
-          out.stopVisible = sr.querySelector('.boost-stop').style.display !== 'none';
-          out.deltaOptions = sr.querySelector('.boost-delta').options.length;
+          out.open = sr.querySelector('.overlay-boost').classList.contains('open');
+          out.pauseOpen = sr.querySelector('.overlay-pause').classList.contains('open');
+          out.status = sr.querySelector('.boost-active-text').textContent;
+          out.stopVisible = sr.querySelector('.boost-active').style.display !== 'none';
+          out.deltaOptions = sr.querySelectorAll('.boost-deltas .chip').length;
+          out.preview = sr.querySelector('.boost-preview').textContent;
+          sr.querySelectorAll('.boost-deltas .chip')[3].click();   // +2
+          sr.querySelectorAll('.boost-durations .chip')[2].click(); // 1 uur
           out.startLabel = sr.querySelector('.boost-start').textContent;
-          sr.querySelector('.boost-delta').value = '2';
-          sr.querySelector('.boost-duration').value = '60';
-          await card._startBoost(card._pauseRoomTargetEid);
+          await card._startBoost(card._boostTargetEid);
           // global
-          card._pauseRoomTargetEid = null; card._renderPauseStatus();
-          out.globalStatus = sr.querySelector('.boost-status').textContent;
+          card._openBoost(null);
+          out.globalStatus = sr.querySelector('.boost-active-text').textContent;
+          out.globalTitle = sr.querySelector('.boost-title').textContent;
           await card._stopBoost(null);
           out.calls = calls;
           out.dom = [ttBoilerDom('climate'), ttBoilerDom('input_boolean'), ttBoilerDom('x')];
@@ -67,8 +70,11 @@ try:
         }''')
         print(result)
         assert result['buttons'] == 2 and result['active'] == 1 and result['pausedShown'] == 0
-        assert result['open'] and 'Boost tot' in result['status'] and '22' in result['status'] and result['stopVisible']
-        assert result['deltaOptions'] == 6 and result['startLabel'] == 'Start boost'
+        assert result['open'] and not result['pauseOpen']
+        assert 'Boost naar 22' in result['status'] and result['stopVisible']
+        assert result['deltaOptions'] == 6 and result['startLabel'] == 'Boost vervangen'
+        assert '20 °C' in result['preview'] and '21 °C' in result['preview'], result['preview']
+        assert result['globalTitle'] == 'Boost alle ruimtes'
         assert result['calls'][0] == ['thermostat_timeline', 'boost', {'delta': 2, 'duration_minutes': 60, 'entity_id': ['climate.bed'], 'instance_id': 'default'}], result['calls']
         assert result['calls'][1] == ['thermostat_timeline', 'cancel_boost', {'instance_id': 'default'}]
         assert '1 ruimte' in result['globalStatus']

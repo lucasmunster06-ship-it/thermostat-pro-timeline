@@ -4549,6 +4549,16 @@ const TT_LANG_ALIAS = { no: 'nb', cz: 'cs', dk: 'da' };
 function ttBoilerDom(v){ const d = String(v || '').toLowerCase().trim(); return (d === 'input_boolean' || d === 'climate') ? d : 'switch'; }
 Object.assign(TT_I18N.en, {
   'boost.title': 'Boost',
+  'boost.pill': 'Boost {temp} until {time}',
+  'hold.pill': 'Manual {temp} until {time}',
+  'boost.title_room': 'Boost — {room}',
+  'boost.title_all': 'Boost all rooms',
+  'boost.explain': 'Temporarily warmer. Afterwards the room returns to its schedule by itself.',
+  'boost.preview_all': 'Every room {d} above its schedule',
+  'boost.hours': '{h} h',
+  'boost.restart': 'Replace boost',
+  'pause.explain': 'The schedule stops sending temperatures. Thermostats keep their current setting.',
+  'pause.choose': 'How long?',
   'boost.room_tooltip': 'Boost this room',
   'boost.raise': 'Raise by',
   'boost.duration': 'For',
@@ -4556,7 +4566,7 @@ Object.assign(TT_I18N.en, {
   'boost.minutes': '{m} min',
   'boost.start': 'Start boost',
   'boost.stop': 'Stop boost',
-  'boost.active': 'Boost until {time} ({temp})',
+  'boost.active': 'Boost to {temp} until {time}',
   'boost.active_rooms': '{n} room(s) boosted',
   'boost.needs_integration': 'Boost needs the Thermostat Timeline integration (shared storage).',
   'boiler.climate_title': 'Thermostat as heat source',
@@ -4568,6 +4578,25 @@ Object.assign(TT_I18N.en, {
 });
 TT_I18N.nl = Object.assign(TT_I18N.nl || {}, {
   'boost.title': 'Boost',
+  'boost.pill': 'Boost {temp} tot {time}',
+  'hold.pill': 'Handmatig {temp} tot {time}',
+  'boost.title_room': 'Boost — {room}',
+  'boost.title_all': 'Boost alle ruimtes',
+  'boost.explain': 'Tijdelijk warmer. Daarna gaat de ruimte vanzelf terug naar het programma.',
+  'boost.preview_all': 'Elke ruimte {d} boven het programma',
+  'boost.hours': '{h} uur',
+  'boost.restart': 'Boost vervangen',
+  'pause.explain': 'Het programma stuurt tijdelijk niets. Thermostaten houden hun huidige temperatuur.',
+  'pause.choose': 'Hoe lang?',
+  'pause.menu_title_room': 'Pauzeren — {room}',
+  'pause.off_1h': '1 uur',
+  'pause.off_5h': '5 uur',
+  'pause.off_custom': 'Anders…',
+  'pause.off_indef': 'Tot ik hervat',
+  'pause.prompt_minutes': 'Hoeveel minuten?',
+  'pause.close': 'Sluiten',
+  'pause.active_until': 'Gepauzeerd tot {time}',
+  'pause.active_indef': 'Gepauzeerd',
   'boost.room_tooltip': 'Boost deze ruimte',
   'boost.raise': 'Verhogen met',
   'boost.duration': 'Duur',
@@ -4575,7 +4604,7 @@ TT_I18N.nl = Object.assign(TT_I18N.nl || {}, {
   'boost.minutes': '{m} min',
   'boost.start': 'Start boost',
   'boost.stop': 'Stop boost',
-  'boost.active': 'Boost tot {time} ({temp})',
+  'boost.active': 'Boost naar {temp} tot {time}',
   'boost.active_rooms': '{n} ruimte(s) in boost',
   'boost.needs_integration': 'Boost werkt alleen met de Thermostat Timeline-integratie (gedeelde opslag).',
   'boiler.climate_title': 'Thermostaat als warmtebron',
@@ -4591,7 +4620,7 @@ TT_I18N.nl = Object.assign(TT_I18N.nl || {}, {
   'boiler.offsets': 'Offsets',
   'boiler.on_offset': 'AAN-offset (°C)',
   'boiler.off_offset': 'UIT-offset (°C)',
-  'pause.menu_title': 'Pauze & boost',
+  'pause.menu_title': 'Pauzeren',
   'pause.resume': 'Nu hervatten',
   'pause.room_tooltip': 'Schema van deze ruimte pauzeren',
 });
@@ -4628,7 +4657,7 @@ function ttLocalize(key, langOrHass) {
 // Simple runtime version to help with cache-busting diagnostics in HA.
 // Update this when shipping changes so the version appears in the
 // "Custom cards" panel and in logs.
-const TT_CARD_VERSION = "3.6.0";
+const TT_CARD_VERSION = "3.6.1";
 
 class ThermostatTimelineCard extends HTMLElement {
   static get version() { return TT_CARD_VERSION; }
@@ -8564,51 +8593,107 @@ class ThermostatTimelineCard extends HTMLElement {
     if (this._config?.time_12h) { let h = hh % 12; if (h === 0) h = 12; return `${h}:${mm} ${hh < 12 ? 'AM' : 'PM'}`; }
     return `${String(hh).padStart(2, '0')}:${mm}`;
   }
-  _renderBoostBox(){
+  _openBoost(target){
+    try {
+      this._boostTargetEid = target || null;
+      if (this._boostDelta == null) this._boostDelta = String(this._config?.temp_unit || 'C').toUpperCase() === 'F' ? 2 : 1;
+      if (this._boostMinutes == null) this._boostMinutes = 0;
+      const ov = this.shadowRoot && this.shadowRoot.querySelector('.overlay-boost');
+      if (ov) ov.classList.add('open');
+      this._renderBoost();
+    } catch {}
+  }
+  _roomLabel(eid){
+    try { return (this._config.labels && this._config.labels[eid]) || this._hass?.states?.[eid]?.attributes?.friendly_name || (String(eid).split('.')[1] || eid); } catch { return eid; }
+  }
+  _renderBoost(){
     const root = this.shadowRoot;
     if (!root) return;
-    const box = root.querySelector('.boost-box');
-    if (!box) return;
-    const target = this._pauseRoomTargetEid;
+    const target = this._boostTargetEid;
     const isF = String(this._config?.temp_unit || 'C').toUpperCase() === 'F';
     const unit = isF ? '°F' : '°C';
+    const fmt = (v) => String(Math.round(v * 10) / 10).replace('.', ',');
     const set = (sel, txt) => { const el = root.querySelector(sel); if (el) el.textContent = txt; };
-    set('.boost-title-text', this._t('boost.title'));
+    set('.boost-title', target ? this._t('boost.title_room').replace('{room}', this._roomLabel(this._roomPauseKey(target))) : this._t('boost.title_all'));
+    set('.boost-sub', this._t('boost.explain'));
     set('.boost-raise-label', this._t('boost.raise'));
     set('.boost-duration-label', this._t('boost.duration'));
     set('.boost-start', this._t('boost.start'));
     set('.boost-stop', this._t('boost.stop'));
-    const delta = root.querySelector('.boost-delta');
-    if (delta && !delta.options.length) {
+    const close = root.querySelector('.boost-close');
+    if (close) { close.title = this._t('pause.close'); close.setAttribute('aria-label', this._t('pause.close')); }
+
+    const deltas = root.querySelector('.boost-deltas');
+    if (deltas) {
       const steps = isF ? [1, 2, 3, 4, 5, 6] : [0.5, 1, 1.5, 2, 3, 4];
-      delta.innerHTML = steps.map(v => `<option value="${v}">+${String(v).replace('.', ',')} ${unit}</option>`).join('');
-      delta.value = isF ? '2' : '1';
+      deltas.replaceChildren(...steps.map(v => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip' + (Number(this._boostDelta) === v ? ' sel' : '');
+        b.textContent = `+${fmt(v)}°`;
+        b.onclick = () => { this._boostDelta = v; this._renderBoost(); };
+        return b;
+      }));
     }
-    const dur = root.querySelector('.boost-duration');
-    if (dur && !dur.options.length) {
-      dur.innerHTML = `<option value="0">${this._t('boost.until_block')}</option>` +
-        [30, 60, 120, 180].map(m => `<option value="${m}">${this._t('boost.minutes').replace('{m}', m)}</option>`).join('');
+    const durs = root.querySelector('.boost-durations');
+    if (durs) {
+      const opts = [[0, this._t('boost.until_block')], [30, this._t('boost.minutes').replace('{m}', 30)],
+        [60, this._t('boost.hours').replace('{h}', 1)], [120, this._t('boost.hours').replace('{h}', 2)], [180, this._t('boost.hours').replace('{h}', 3)]];
+      durs.replaceChildren(...opts.map(([m, label]) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip' + (Number(this._boostMinutes) === m ? ' sel' : '');
+        b.textContent = label;
+        b.onclick = () => { this._boostMinutes = m; this._renderBoost(); };
+        return b;
+      }));
     }
+    // Preview: current target -> boosted target
+    let preview = '';
+    if (target) {
+      try {
+        const nowMin = this._getNowMin ? this._getNowMin() : 0;
+        const cur = this._desiredTempFor ? this._desiredTempFor(this._roomPauseKey(target), nowMin) : null;
+        if (cur != null && Number.isFinite(Number(cur))) {
+          const c = Number(this._toDisplayTemp ? this._toDisplayTemp(cur) : cur);
+          preview = `${fmt(c)} ${unit}  →  ${fmt(c + Number(this._boostDelta))} ${unit}`;
+        }
+      } catch {}
+    } else {
+      preview = this._t('boost.preview_all').replace('{d}', `+${fmt(Number(this._boostDelta))} ${unit}`);
+    }
+    set('.boost-preview', preview);
+
     const integration = !!this._config?.storage_enabled;
     const startBtn = root.querySelector('.boost-start');
     if (startBtn) startBtn.disabled = !integration;
-    let status = integration ? '' : this._t('boost.needs_integration');
-    let active = false;
+    set('.boost-note', integration ? '' : this._t('boost.needs_integration'));
+    let activeText = '';
     if (target) {
       const info = this._roomBoostInfo(target);
       if (info) {
-        active = true;
         const t = Number(info.target_c);
-        const shown = Number.isFinite(t) ? `${(isF ? t * 9 / 5 + 32 : t).toFixed(1).replace('.0', '')} ${unit}` : '';
-        status = this._t('boost.active').replace('{time}', this._fmtClock(info.until_ms)).replace('{temp}', shown);
+        const shown = Number.isFinite(t) ? `${fmt(isF ? t * 9 / 5 + 32 : t)} ${unit}` : '';
+        activeText = this._t('boost.active').replace('{time}', this._fmtClock(info.until_ms)).replace('{temp}', shown);
       }
     } else {
       const n = this._boostedRooms().length;
-      if (n) { active = true; status = this._t('boost.active_rooms').replace('{n}', n); }
+      if (n) activeText = this._t('boost.active_rooms').replace('{n}', n);
     }
-    set('.boost-status', status);
-    const stopBtn = root.querySelector('.boost-stop');
-    if (stopBtn) stopBtn.style.display = (active && integration) ? '' : 'none';
+    const act = root.querySelector('.boost-active');
+    if (act) act.style.display = (activeText && integration) ? '' : 'none';
+    set('.boost-active-text', activeText);
+    if (startBtn) startBtn.textContent = activeText ? this._t('boost.restart') : this._t('boost.start');
+  }
+  async _syncRoomPauseNow(){
+    // Pull the room pauses straight after a boost change, so the card shows it immediately.
+    try {
+      const api = this._apiFetchState ? await this._apiFetchState() : null;
+      const rp = api?.settings?.room_pause;
+      if (rp && typeof rp === 'object') { this._config.room_pause = { ...rp }; }
+      if (api && api.heat_status) this._heatStatus = api.heat_status;
+    } catch {}
+    try { this._render(); } catch {}
   }
   _haUsesF(){
     try { return String(this._hass?.config?.unit_system?.temperature || '').includes('F'); } catch { return false; }
@@ -8618,17 +8703,18 @@ class ThermostatTimelineCard extends HTMLElement {
       if (!this._hass || !this._config?.storage_enabled) return;
       const root = this.shadowRoot;
       const cardF = String(this._config?.temp_unit || 'C').toUpperCase() === 'F';
-      const raw = Number(root.querySelector('.boost-delta')?.value || 1);
+      const raw = Number(this._boostDelta || 1);
       const deltaC = cardF ? raw * 5 / 9 : raw;
       const data = { delta: Math.round((this._haUsesF() ? deltaC * 9 / 5 : deltaC) * 10) / 10 };
-      const minutes = Number(root.querySelector('.boost-duration')?.value || 0);
+      const minutes = Number(this._boostMinutes || 0);
       if (minutes > 0) data.duration_minutes = minutes;
       if (target) data.entity_id = [this._roomPauseKey(target)];
       const iid = this._instanceId ? this._instanceId() : '';
       if (iid) data.instance_id = iid;
       await this._hass.callService('thermostat_timeline', 'boost', data);
-      root.querySelector('.overlay-pause')?.classList.remove('open');
-      this._pauseRoomTargetEid = null;
+      await this._syncRoomPauseNow();
+      root.querySelector('.overlay-boost')?.classList.remove('open');
+      this._boostTargetEid = null;
     } catch (e) {
       try { alert(String(e?.message || e)); } catch {}
     }
@@ -8641,8 +8727,9 @@ class ThermostatTimelineCard extends HTMLElement {
       const iid = this._instanceId ? this._instanceId() : '';
       if (iid) data.instance_id = iid;
       await this._hass.callService('thermostat_timeline', 'cancel_boost', data);
-      this.shadowRoot.querySelector('.overlay-pause')?.classList.remove('open');
-      this._pauseRoomTargetEid = null;
+      await this._syncRoomPauseNow();
+      this.shadowRoot.querySelector('.overlay-boost')?.classList.remove('open');
+      this._boostTargetEid = null;
     } catch (e) {
       try { alert(String(e?.message || e)); } catch {}
     }
@@ -9259,7 +9346,7 @@ class ThermostatTimelineCard extends HTMLElement {
   .tick label .mer{display:block; line-height:1; font-size:.65rem; text-align:center;}
         .row{border-bottom:1px solid var(--divider-color)}
         .row-head{display:flex;align-items:center;justify-content:space-between;padding:8px 0;background:transparent}
-        .row-head .meta{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--secondary-text-color)}
+        .row-head .meta{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--secondary-text-color);flex-wrap:wrap;row-gap:4px;min-width:0}
         .row-head input[type=number]{width:64px;padding:4px 6px;border:1px solid var(--divider-color);border-radius:8px;background:var(--card-background-color);color:var(--primary-text-color);font-size:.8rem}
   /* Normalize button heights inside row header to avoid vertical shift */
   .row-head .btn{ display:inline-flex; align-items:center; height:32px; box-sizing:border-box; white-space: nowrap; }
@@ -9327,14 +9414,14 @@ class ThermostatTimelineCard extends HTMLElement {
   .row-pause-btn{ width:22px; height:22px; border-radius:999px; border:1px solid var(--divider-color); background: transparent; color: var(--secondary-text-color); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
   .row-pause-btn ha-icon{ --mdc-icon-size: 16px; }
   .row-pause-btn.paused{ background: var(--error-color); border-color: var(--error-color); color: var(--text-primary-color, #fff); }
+  .hold-pill{ display:inline-flex; align-items:center; gap:4px; height:24px; padding:0 10px 0 6px; border-radius:999px; border:none; cursor:pointer; font: inherit; font-size:.78rem; font-weight:600; white-space:nowrap; }
+  .hold-pill ha-icon{ --mdc-icon-size:15px; }
+  .hold-pill.boost{ background: var(--warning-color, #ff9800); color: #fff; }
+  .hold-pill.manual{ background: color-mix(in srgb, var(--primary-color) 25%, transparent); color: var(--primary-text-color); border:1px solid var(--primary-color); }
+  .hold-band{ position:absolute; top:6px; bottom:6px; z-index:4; pointer-events:none; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:.78rem; font-weight:700; color:#fff; overflow:hidden; white-space:nowrap; }
+  .hold-band.boost{ background: repeating-linear-gradient(135deg, rgba(255,152,0,.85) 0 8px, rgba(255,152,0,.65) 8px 16px); box-shadow: 0 0 0 1px var(--warning-color, #ff9800); }
+  .hold-band.manual{ background: repeating-linear-gradient(135deg, rgba(3,169,244,.55) 0 8px, rgba(3,169,244,.35) 8px 16px); box-shadow: 0 0 0 1px var(--primary-color); }
   .row-boost-btn.active{ background: var(--warning-color, #ff9800); border-color: var(--warning-color, #ff9800); color: var(--text-primary-color, #fff); }
-  .boost-box{ margin-top:14px; padding-top:12px; border-top:1px solid var(--divider-color); display:grid; gap:8px; }
-  .boost-title{ display:flex; align-items:center; gap:6px; font-weight:600; }
-  .boost-title ha-icon{ --mdc-icon-size:20px; color: var(--warning-color, #ff9800); }
-  .boost-row{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
-  .boost-field{ display:grid; gap:4px; font-size:.85rem; color: var(--secondary-text-color); }
-  .boost-status{ font-size:.9rem; color: var(--secondary-text-color); }
-  .boost-actions{ display:flex; gap:8px; flex-wrap:wrap; }
   .row-pause-eta{ font-size:.7rem; color: var(--secondary-text-color); white-space:nowrap; padding:1px 6px; border:1px solid var(--divider-color); border-radius:999px; background: var(--secondary-background-color, rgba(0,0,0,.05)); }
 
     .btn{cursor:pointer;border:1px solid var(--divider-color);border-radius:10px;padding:6px 10px;font-size:.8rem;background:var(--card-background-color);color:var(--primary-text-color)}
@@ -9480,8 +9567,31 @@ class ThermostatTimelineCard extends HTMLElement {
   .profiles-btn.success{ background: var(--success-color, #4caf50); color: var(--text-primary-color, #fff); border-color: var(--success-color, #4caf50); }
   .prof-toolbar .btn ha-icon{ --mdc-icon-size: 16px; }
   .prof-toolbar .btn.primary{ background: var(--primary-color) !important; color: var(--text-primary-color, #fff) !important; border-color: var(--primary-color) !important; }
-        .modal-pause{ width:min(86vw, 320px); max-width:320px; border-radius:8px; padding:10px; background: var(--card-background-color); color: var(--primary-text-color); border:1px solid var(--divider-color); }
-        .pause-list{ display:grid; gap:8px; }
+        .tt-sheet{ width:min(92vw, 380px); max-width:380px; box-sizing:border-box; border-radius:16px; padding:16px; background: var(--card-background-color); color: var(--primary-text-color); border:1px solid var(--divider-color); display:grid; gap:12px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+        .tt-sheet h3{ margin:0; font-size:1.1rem; line-height:1.3; }
+        .sheet-head{ display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:start; }
+        .sheet-icon{ width:40px; height:40px; border-radius:12px; display:grid; place-items:center; background: color-mix(in srgb, var(--primary-color) 18%, transparent); color: var(--primary-color); }
+        .sheet-icon.boost-icon{ background: color-mix(in srgb, var(--warning-color, #ff9800) 20%, transparent); color: var(--warning-color, #ff9800); }
+        .sheet-sub{ font-size:.85rem; color: var(--secondary-text-color); margin-top:2px; line-height:1.35; }
+        .sheet-x{ width:32px; height:32px; border-radius:999px; border:none; background:transparent; color: var(--secondary-text-color); cursor:pointer; display:grid; place-items:center; }
+        .sheet-x:hover{ background: var(--secondary-background-color, rgba(127,127,127,.15)); }
+        .sheet-status:empty{ display:none; }
+        .sheet-status{ font-size:.9rem; padding:8px 10px; border-radius:10px; background: var(--secondary-background-color, rgba(127,127,127,.12)); }
+        .sheet-label{ font-size:.8rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color: var(--secondary-text-color); margin-bottom:-4px; }
+        .chip-grid{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:8px; }
+        .chip-grid.four{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+        .chip{ min-height:40px; border-radius:10px; border:1px solid var(--divider-color); background: var(--card-background-color); color: var(--primary-text-color); font: inherit; font-size:.9rem; cursor:pointer; padding:6px 8px; }
+        .chip:hover{ border-color: var(--primary-color); }
+        .chip.sel{ background: var(--primary-color); border-color: var(--primary-color); color: var(--text-primary-color, #fff); font-weight:600; }
+        .modal-boost .chip.sel{ background: var(--warning-color, #ff9800); border-color: var(--warning-color, #ff9800); }
+        .btn.wide{ width:100%; min-height:42px; font-size:.95rem; border-radius:12px; }
+        .modal-boost .btn.primary{ background: var(--warning-color, #ff9800); border-color: var(--warning-color, #ff9800); }
+        .boost-preview{ text-align:center; font-size:1.05rem; font-weight:600; }
+        .boost-preview:empty{ display:none; }
+        .boost-active{ display:flex; gap:10px; align-items:center; justify-content:space-between; padding:10px 12px; border-radius:12px; background: color-mix(in srgb, var(--warning-color, #ff9800) 16%, transparent); border:1px solid color-mix(in srgb, var(--warning-color, #ff9800) 45%, transparent); }
+        .boost-active-text{ font-size:.92rem; }
+        .pause-btn.boost-head-btn{ background: var(--card-background-color); color: var(--warning-color, #ff9800); border-color: var(--warning-color, #ff9800); }
+        .pause-btn.boost-head-btn.active{ background: var(--warning-color, #ff9800); color: var(--text-primary-color, #fff); }
   /* Profiles modal */
   /* Stack controls above preview to give them more space; match Weekly modal width */
   /* Make tooltip positions relative to the profiles modal */
@@ -9857,29 +9967,48 @@ class ThermostatTimelineCard extends HTMLElement {
         </div>
         <!-- Pause auto-apply -->
         <div class="overlay overlay-pause" part="overlay">
-          <div class="modal modal-pause" role="dialog" aria-modal="true">
-            <h3 class="pause-title"></h3>
-            <div class="pause-status" style="font-size:.9rem; color: var(--secondary-text-color); margin-bottom:6px;"></div>
-            <div class="pause-list">
-              <button type="button" class="btn ghost pause-1h"></button>
-              <button type="button" class="btn ghost pause-5h"></button>
-              <button type="button" class="btn ghost pause-custom"></button>
-              <button type="button" class="btn ghost pause-indef"></button>
-              <button type="button" class="btn success pause-resume"></button>
-              <button type="button" class="btn danger pause-close"></button>
-            </div>
-            <div class="boost-box">
-              <div class="boost-title"><ha-icon icon="mdi:fire"></ha-icon><span class="boost-title-text"></span></div>
-              <div class="boost-row">
-                <label class="boost-field"><span class="boost-raise-label"></span><select class="settings-input boost-delta"></select></label>
-                <label class="boost-field"><span class="boost-duration-label"></span><select class="settings-input boost-duration"></select></label>
+          <div class="modal modal-pause tt-sheet" role="dialog" aria-modal="true">
+            <div class="sheet-head">
+              <span class="sheet-icon pause-icon"><ha-icon icon="mdi:pause"></ha-icon></span>
+              <div class="sheet-headtext">
+                <h3 class="pause-title"></h3>
+                <div class="sheet-sub pause-sub"></div>
               </div>
-              <div class="boost-status"></div>
-              <div class="boost-actions">
-                <button type="button" class="btn primary boost-start"></button>
-                <button type="button" class="btn ghost boost-stop"></button>
-              </div>
+              <button type="button" class="sheet-x pause-close"><ha-icon icon="mdi:close"></ha-icon></button>
             </div>
+            <div class="sheet-status pause-status"></div>
+            <div class="sheet-label pause-choose-label"></div>
+            <div class="chip-grid pause-list">
+              <button type="button" class="chip pause-1h"></button>
+              <button type="button" class="chip pause-5h"></button>
+              <button type="button" class="chip pause-custom"></button>
+              <button type="button" class="chip pause-indef"></button>
+            </div>
+            <button type="button" class="btn success wide pause-resume"></button>
+          </div>
+        </div>
+        <!-- Boost -->
+        <div class="overlay overlay-boost" part="overlay">
+          <div class="modal modal-boost tt-sheet" role="dialog" aria-modal="true">
+            <div class="sheet-head">
+              <span class="sheet-icon boost-icon"><ha-icon icon="mdi:fire"></ha-icon></span>
+              <div class="sheet-headtext">
+                <h3 class="boost-title"></h3>
+                <div class="sheet-sub boost-sub"></div>
+              </div>
+              <button type="button" class="sheet-x boost-close"><ha-icon icon="mdi:close"></ha-icon></button>
+            </div>
+            <div class="boost-active">
+              <div class="boost-active-text"></div>
+              <button type="button" class="btn ghost boost-stop"></button>
+            </div>
+            <div class="sheet-status boost-note"></div>
+            <div class="sheet-label boost-raise-label"></div>
+            <div class="chip-grid four boost-deltas"></div>
+            <div class="boost-preview"></div>
+            <div class="sheet-label boost-duration-label"></div>
+            <div class="chip-grid boost-durations"></div>
+            <button type="button" class="btn primary wide boost-start"></button>
           </div>
         </div>
         <!-- In-card Settings (moved out of HA editor over time) -->
@@ -10222,13 +10351,23 @@ class ThermostatTimelineCard extends HTMLElement {
         if (t) this._resumeRoomNow(t); else this._resumeNow();
       });
       bx?.addEventListener('click', ()=>{ try { ov?.classList.remove('open'); this._pauseRoomTargetEid = null; } catch {} });
-      this.shadowRoot.querySelector('.boost-start')?.addEventListener('click', ()=>{ this._startBoost(this._pauseRoomTargetEid); });
-      this.shadowRoot.querySelector('.boost-stop')?.addEventListener('click', ()=>{ this._stopBoost(this._pauseRoomTargetEid); });
+      const bov = this.shadowRoot.querySelector('.overlay-boost');
+      this.shadowRoot.querySelector('.boost-start')?.addEventListener('click', ()=>{ this._startBoost(this._boostTargetEid); });
+      this.shadowRoot.querySelector('.boost-stop')?.addEventListener('click', ()=>{ this._stopBoost(this._boostTargetEid); });
+      this.shadowRoot.querySelector('.boost-close')?.addEventListener('click', ()=>{ bov?.classList.remove('open'); this._boostTargetEid = null; });
+      bov?.addEventListener('click', (ev)=>{ if (ev.target === bov) { bov.classList.remove('open'); this._boostTargetEid = null; } });
+      ov?.addEventListener('click', (ev)=>{ if (ev.target === ov) { ov.classList.remove('open'); this._pauseRoomTargetEid = null; } });
     } catch {}
   }
 
   _renderPauseStatus(){
-    try { this._renderBoostBox(); } catch {}
+    try {
+      const rb = this.shadowRoot && this.shadowRoot.querySelector('.pause-resume');
+      const t0 = this._pauseRoomTargetEid;
+      if (rb) rb.style.display = (t0 ? this._isRoomPaused(t0) && !this._roomBoostInfo(t0) : this._isPaused()) ? '' : 'none';
+      const pt = this.shadowRoot && this.shadowRoot.querySelector('.pause-title');
+      if (pt && !t0) pt.textContent = this._t('pause.menu_title');
+    } catch {}
     try {
       const st = this.shadowRoot && this.shadowRoot.querySelector('.pause-status');
       const titleEl = this.shadowRoot && this.shadowRoot.querySelector('.pause-title');
@@ -11082,11 +11221,20 @@ class ThermostatTimelineCard extends HTMLElement {
           btn.innerHTML = '<ha-icon icon="mdi:pause"></ha-icon>';
           btn.addEventListener('click', ()=>{
             try {
+              this._pauseRoomTargetEid = null;
               const ov = this.shadowRoot && this.shadowRoot.querySelector('.overlay-pause');
               if (ov) ov.classList.add('open');
               this._renderPauseStatus();
             } catch {}
           });
+          if (this._config?.storage_enabled) {
+            const bb = document.createElement('button');
+            bb.className = 'pause-btn boost-head-btn' + (this._boostedRooms().length ? ' active' : '');
+            bb.title = this._t('boost.title_all');
+            bb.innerHTML = '<ha-icon icon="mdi:fire"></ha-icon>';
+            bb.addEventListener('click', ()=>{ this._openBoost(null); });
+            wrap.append(bb);
+          }
           // Build optional bubble to the left
           const paused = this._isPaused();
           const until = Number(this._pauseUntilMs||0);
@@ -11607,7 +11755,8 @@ class ThermostatTimelineCard extends HTMLElement {
       // header button, but scoped to this room (this._pauseRoomTargetEid).
       try {
         const boostInfo = this._roomBoostInfo ? this._roomBoostInfo(eid) : null;
-        const roomPaused = (this._isRoomPaused ? this._isRoomPaused(eid) : false) && !boostInfo;
+        const holdSrc = (this._roomPauseInfo(eid) || {}).source;
+        const roomPaused = (this._isRoomPaused ? this._isRoomPaused(eid) : false) && !boostInfo && holdSrc !== 'manual_target';
         const pauseWrap = document.createElement('span');
         pauseWrap.className = 'row-pause-toggle';
         const pauseIconBtn = document.createElement('button');
@@ -11634,30 +11783,38 @@ class ThermostatTimelineCard extends HTMLElement {
           } catch {}
         });
         pauseWrap.append(pauseIconBtn);
-        // Boost button: same modal, boost section at the bottom.
         const boostBtn = document.createElement('button');
         boostBtn.type = 'button';
         boostBtn.className = 'row-pause-btn row-boost-btn' + (boostInfo ? ' active' : '');
         boostBtn.title = this._t('boost.room_tooltip');
         boostBtn.innerHTML = '<ha-icon icon="mdi:fire"></ha-icon>';
-        if (boostInfo) {
-          const eta = document.createElement('span');
-          eta.className = 'row-pause-eta';
-          eta.textContent = this._formatRoomPauseCountdown(eid);
-          pauseWrap.append(eta);
-        }
         boostBtn.addEventListener('click', (ev) => {
           try {
             ev.stopPropagation();
-            this._pauseRoomTargetEid = eid;
-            const ov = this.shadowRoot && this.shadowRoot.querySelector('.overlay-pause');
-            if (ov) ov.classList.add('open');
-            this._renderPauseStatus();
-            ov?.querySelector('.boost-box')?.scrollIntoView({ block: 'nearest' });
+            this._openBoost(eid);
           } catch {}
         });
         pauseWrap.append(boostBtn);
         meta.append(pauseWrap);
+        // Clearly visible status pill for a running boost or a manual hold
+        const hold = this._roomPauseInfo(eid);
+        const holdActive = hold && hold.until_ms > Date.now() && (hold.source === 'boost' || hold.source === 'manual_target');
+        if (holdActive) {
+          const isF = String(this._config?.temp_unit || 'C').toUpperCase() === 'F';
+          const t = Number(hold.target_c);
+          const temp = Number.isFinite(t) ? `${String(Math.round((isF ? t * 9 / 5 + 32 : t) * 10) / 10).replace('.', ',')}°` : '';
+          const pill = document.createElement('button');
+          pill.type = 'button';
+          pill.className = 'hold-pill ' + (hold.source === 'boost' ? 'boost' : 'manual');
+          pill.innerHTML = `<ha-icon icon="${hold.source === 'boost' ? 'mdi:fire' : 'mdi:hand-back-right'}"></ha-icon>`;
+          const txt = document.createElement('span');
+          txt.textContent = this._t(hold.source === 'boost' ? 'boost.pill' : 'hold.pill')
+            .replace('{temp}', temp).replace('{time}', this._fmtClock(hold.until_ms));
+          pill.append(txt);
+          pill.title = this._formatRoomPauseCountdown(eid);
+          pill.addEventListener('click', (ev) => { ev.stopPropagation(); this._openBoost(eid); });
+          meta.append(pill);
+        }
       } catch {}
 
       // (Global Away bypass button moved to header; no per-room button)
@@ -11813,9 +11970,28 @@ class ThermostatTimelineCard extends HTMLElement {
         const applyMap = (this._config?.apply_enabled && typeof this._config.apply_enabled === 'object') ? this._config.apply_enabled : {};
         const enabled = Object.prototype.hasOwnProperty.call(applyMap, eid) ? !!applyMap[eid] : true;
         if (!enabled) track.classList.add('schedule-disabled');
-        if (this._isRoomPaused && this._isRoomPaused(eid)) track.classList.add('schedule-paused');
+        if (this._isRoomPaused && this._isRoomPaused(eid) && !['boost', 'manual_target'].includes((this._roomPauseInfo(eid) || {}).source)) track.classList.add('schedule-paused');
       } catch {}
       track.style.setProperty('--row-height', `${this._config.row_height}px`);
+      // Boost / manual hold band from now until it ends (today's part)
+      try {
+        const hold = this._roomPauseInfo(eid);
+        if (hold && hold.until_ms > Date.now() && (hold.source === 'boost' || hold.source === 'manual_target')
+            && this._timelineDisplayDayKey() === this._todayKey()) {
+          const nowMin = this._getNowMin();
+          const end = new Date(hold.until_ms);
+          const endMin = Math.min(1440, nowMin + Math.max(1, Math.round((hold.until_ms - Date.now()) / 60000)));
+          const band = document.createElement('div');
+          band.className = 'hold-band ' + (hold.source === 'boost' ? 'boost' : 'manual');
+          band.style.left = `${(nowMin / 1440) * 100}%`;
+          band.style.width = `${Math.max(0.4, ((endMin - nowMin) / 1440) * 100)}%`;
+          const isF = String(this._config?.temp_unit || 'C').toUpperCase() === 'F';
+          const t = Number(hold.target_c);
+          band.textContent = Number.isFinite(t) ? `${String(Math.round((isF ? t * 9 / 5 + 32 : t) * 10) / 10).replace('.', ',')}°` : '';
+          band.title = this._fmtClock(end.getTime());
+          track.append(band);
+        }
+      } catch {}
   // Use browsed day in weekdays view (all rooms • one day)
   const displayDayKey = this._timelineDisplayDayKey();
   let dayKey = displayDayKey;
@@ -20721,7 +20897,7 @@ class ThermostatTimelineCard extends HTMLElement {
     try {
       const t = (k)=> this._t(k);
       // Main modal: Edit block
-      const modal = this.shadowRoot && this.shadowRoot.querySelector('.overlay:not(.overlay-week):not(.overlay-profiles):not(.overlay-holiday):not(.overlay-presence):not(.overlay-copyrooms):not(.overlay-onboard):not(.overlay-pause):not(.overlay-test):not(.overlay-settings) .modal');
+      const modal = this.shadowRoot && this.shadowRoot.querySelector('.overlay:not(.overlay-week):not(.overlay-profiles):not(.overlay-holiday):not(.overlay-presence):not(.overlay-copyrooms):not(.overlay-onboard):not(.overlay-pause):not(.overlay-boost):not(.overlay-chart):not(.overlay-heat):not(.overlay-test):not(.overlay-settings) .modal');
       if (modal) {
         modal.setAttribute('aria-label', t('ui.edit_block'));
         const h3 = modal.querySelector('.ed-modal-title');
@@ -20844,7 +21020,11 @@ class ThermostatTimelineCard extends HTMLElement {
         const pr = this.shadowRoot && this.shadowRoot.querySelector('.pause-resume');
         if (pr) pr.textContent = t('pause.resume');
         const px = this.shadowRoot && this.shadowRoot.querySelector('.pause-close');
-        if (px) px.textContent = t('pause.close');
+        if (px) { px.title = t('pause.close'); px.setAttribute('aria-label', t('pause.close')); }
+        const psub = this.shadowRoot && this.shadowRoot.querySelector('.pause-sub');
+        if (psub) psub.textContent = t('pause.explain');
+        const pcl = this.shadowRoot && this.shadowRoot.querySelector('.pause-choose-label');
+        if (pcl) pcl.textContent = t('pause.choose');
       } catch {}
 
       // Test modal
