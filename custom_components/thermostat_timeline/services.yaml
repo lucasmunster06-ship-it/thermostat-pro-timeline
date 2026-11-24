@@ -248,3 +248,66 @@ resume_schedule:
       description: Uses the active instance when omitted.
       selector:
         text:
+
+boost:
+  name: Boost
+  description: >-
+    Temporarily raise one or more rooms (or all rooms when entity_id is omitted).
+    Every radiator merged into a room gets the boost and the heat source follows.
+    The room returns to its schedule at the next block, or after duration_minutes.
+  fields:
+    entity_id:
+      name: Rooms
+      description: Primary room entities. Leave empty to boost every room.
+      selector:
+        entity:
+          multiple: true
+          domain: [climate, input_number]
+    temperature:
+      name: Temperature
+      description: Fixed boost temperature. Use either this or delta.
+      selector:
+        number:
+          min: 5
+          max: 35
+          step: 0.5
+          mode: box
+    delta:
+      name: Raise by
+      description: Degrees above the current schedule. Defaults to 1 when neither temperature nor delta is given.
+      selector:
+        number:
+          min: 0.5
+          max: 10
+          step: 0.5
+          mode: box
+    duration_minutes:
+      name: Duration in minutes
+      description: Omit to keep the boost until the next scheduled block.
+      selector:
+        number:
+          min: 1
+          max: 1440
+          mode: box
+    instance_id:
+      name: Instance ID
+      description: Uses the active instance when omitted.
+      selector:
+        text:
+
+cancel_boost:
+  name: Cancel boost
+  description: End running boosts and return the rooms to their schedule.
+  fields:
+    entity_id:
+      name: Rooms
+      description: Primary room entities. Leave empty to end every boost.
+      selector:
+        entity:
+          multiple: true
+          domain: [climate, input_number]
+    instance_id:
+      name: Instance ID
+      description: Uses the active instance when omitted.
+      selector:
+        text:

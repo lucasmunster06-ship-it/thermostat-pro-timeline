@@ -1,6 +1,5 @@
 {
-  "name": "Thermostat Pro Timeline",
+  "name": "Thermostat Pro Timeline (boost + thermostaat-ketel)",
   "render_readme": true,
-  "zip_release": true,
-  "filename": "thermostat-pro-timeline-sync.zip"
+  "zip_release": false
 }

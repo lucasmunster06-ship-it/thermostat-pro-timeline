@@ -4545,6 +4545,56 @@ const TT_I18N = {
   },
 };
 const TT_LANG_ALIAS = { no: 'nb', cz: 'cs', dk: 'da' };
+// Boiler entity type: switch / input_boolean are switched, a climate boiler gets its setpoint raised.
+function ttBoilerDom(v){ const d = String(v || '').toLowerCase().trim(); return (d === 'input_boolean' || d === 'climate') ? d : 'switch'; }
+Object.assign(TT_I18N.en, {
+  'boost.title': 'Boost',
+  'boost.room_tooltip': 'Boost this room',
+  'boost.raise': 'Raise by',
+  'boost.duration': 'For',
+  'boost.until_block': 'Until the next block',
+  'boost.minutes': '{m} min',
+  'boost.start': 'Start boost',
+  'boost.stop': 'Stop boost',
+  'boost.active': 'Boost until {time} ({temp})',
+  'boost.active_rooms': '{n} room(s) boosted',
+  'boost.needs_integration': 'Boost needs the Thermostat Timeline integration (shared storage).',
+  'boiler.climate_title': 'Thermostat as heat source',
+  'boiler.climate_desc': 'When the selected entity is a climate thermostat (e.g. Nefit/OpenTherm), its setpoint is raised while a room asks for heat and lowered again afterwards.',
+  'boiler.climate_on_offset': 'Raise above its measured temp',
+  'boiler.climate_max': 'Highest setpoint',
+  'boiler.climate_idle': 'Setpoint when no heat is needed',
+  'boiler.climate_idle_desc': 'Not used when the thermostat itself is one of your rooms: then it follows that room\'s schedule.',
+});
+TT_I18N.nl = Object.assign(TT_I18N.nl || {}, {
+  'boost.title': 'Boost',
+  'boost.room_tooltip': 'Boost deze ruimte',
+  'boost.raise': 'Verhogen met',
+  'boost.duration': 'Duur',
+  'boost.until_block': 'Tot het volgende blok',
+  'boost.minutes': '{m} min',
+  'boost.start': 'Start boost',
+  'boost.stop': 'Stop boost',
+  'boost.active': 'Boost tot {time} ({temp})',
+  'boost.active_rooms': '{n} ruimte(s) in boost',
+  'boost.needs_integration': 'Boost werkt alleen met de Thermostat Timeline-integratie (gedeelde opslag).',
+  'boiler.climate_title': 'Thermostaat als warmtebron',
+  'boiler.climate_desc': 'Is de gekozen entiteit een climate-thermostaat (bijv. Nefit/OpenTherm), dan wordt de setpoint verhoogd zolang een ruimte warmte vraagt en daarna weer verlaagd.',
+  'boiler.climate_on_offset': 'Verhogen boven gemeten temp',
+  'boiler.climate_max': 'Hoogste setpoint',
+  'boiler.climate_idle': 'Setpoint zonder warmtevraag',
+  'boiler.climate_idle_desc': 'Niet gebruikt als de thermostaat zelf een van je ruimtes is: dan volgt hij het schema van die ruimte.',
+  'boiler.switch': 'Ketel / warmtebron',
+  'boiler.switch_type': 'Type entiteit',
+  'boiler.enable': 'Ketelsturing inschakelen',
+  'boiler.rooms': 'Ruimtes die meetellen',
+  'boiler.offsets': 'Offsets',
+  'boiler.on_offset': 'AAN-offset (°C)',
+  'boiler.off_offset': 'UIT-offset (°C)',
+  'pause.menu_title': 'Pauze & boost',
+  'pause.resume': 'Nu hervatten',
+  'pause.room_tooltip': 'Schema van deze ruimte pauzeren',
+});
 function ttGetLangFromHass(hass) {
   // Home Assistant can report locales like "da_DK"; normalize to BCP-47 ("da-DK").
   const raw =
@@ -4578,7 +4628,7 @@ function ttLocalize(key, langOrHass) {
 // Simple runtime version to help with cache-busting diagnostics in HA.
 // Update this when shipping changes so the version appears in the
 // "Custom cards" panel and in logs.
-const TT_CARD_VERSION = "3.5.0";
+const TT_CARD_VERSION = "3.6.0";
 
 class ThermostatTimelineCard extends HTMLElement {
   static get version() { return TT_CARD_VERSION; }
@@ -5085,10 +5135,10 @@ class ThermostatTimelineCard extends HTMLElement {
       const sw = String(config.boiler_switch ?? this._config?.boiler_switch ?? '');
       const fromEid = (()=>{
         const dom = String(sw||'').split('.')[0];
-        return (dom === 'input_boolean') ? 'input_boolean' : 'switch';
+        return ttBoilerDom(dom);
       })();
       const raw = String((config.boiler_switch_domain ?? this._config?.boiler_switch_domain ?? fromEid) || '').toLowerCase().trim();
-      return (raw === 'input_boolean') ? 'input_boolean' : 'switch';
+      return ttBoilerDom(raw);
     } catch { return 'switch'; }
   })(),
   boiler_rooms: (()=>{
@@ -6161,9 +6211,9 @@ class ThermostatTimelineCard extends HTMLElement {
             }
             try {
               const rawDom = String(s.boiler_switch_domain || '').toLowerCase().trim();
-              const domFromSetting = (rawDom === 'input_boolean') ? 'input_boolean' : 'switch';
+              const domFromSetting = ttBoilerDom(rawDom);
               const swDom = String(s.boiler_switch || '').split('.')[0];
-              const domFromSwitch = (swDom === 'input_boolean' || swDom === 'switch') ? swDom : domFromSetting;
+              const domFromSwitch = (swDom === 'input_boolean' || swDom === 'switch' || swDom === 'climate') ? swDom : domFromSetting;
               const curSw = String(this._config?.boiler_switch || '');
               if (!this._yamlProvided?.boiler_switch_domain || !curSw) this._config.boiler_switch_domain = domFromSwitch;
             } catch {}
@@ -6249,7 +6299,7 @@ class ThermostatTimelineCard extends HTMLElement {
               if (Array.isArray(s.holidays_dates) && !this._yamlProvided?.holidays_dates) this._config.holidays_dates = [...s.holidays_dates];
               if (Array.isArray(s.holidays_groups)) this._config.holidays_groups = [...s.holidays_groups];
             } catch {}
-            for (const key of ['manual_target_hold', 'alarm_pause', 'season_follow', 'seasonal_sources', 'air_rooms', 'thermal_rooms', 'confirm_season_change', 'sensor_season_last', 'summer_off_rooms', 'holiday_trips', 'workday_plans', 'boiler_manual_targets']) {
+            for (const key of ['manual_target_hold', 'alarm_pause', 'season_follow', 'seasonal_sources', 'air_rooms', 'thermal_rooms', 'confirm_season_change', 'sensor_season_last', 'summer_off_rooms', 'holiday_trips', 'workday_plans', 'boiler_manual_targets', 'boiler_climate']) {
               if (key in s) this._config[key] = s[key];
             }
             // Weekdays settings (shared)
@@ -6504,9 +6554,9 @@ class ThermostatTimelineCard extends HTMLElement {
     }
     try {
       const rawDom = String(s.boiler_switch_domain || '').toLowerCase().trim();
-      const domFromSetting = (rawDom === 'input_boolean') ? 'input_boolean' : 'switch';
+      const domFromSetting = ttBoilerDom(rawDom);
       const swDom = String(s.boiler_switch || '').split('.')[0];
-      const domFromSwitch = (swDom === 'input_boolean' || swDom === 'switch') ? swDom : domFromSetting;
+      const domFromSwitch = (swDom === 'input_boolean' || swDom === 'switch' || swDom === 'climate') ? swDom : domFromSetting;
       const curSw = String(this._config?.boiler_switch || '');
       if (!this._yamlProvided?.boiler_switch_domain || !curSw) this._config.boiler_switch_domain = domFromSwitch;
     } catch {}
@@ -6534,7 +6584,7 @@ class ThermostatTimelineCard extends HTMLElement {
   try { this._awayBypass = !!s.away_bypass; } catch {}
   // Open Window Detection from local storage copy
   try { if (s.open_window && typeof s.open_window==='object') this._config.open_window = { ...s.open_window }; } catch {}
-  for (const key of ['manual_target_hold', 'alarm_pause', 'season_follow', 'seasonal_sources', 'air_rooms', 'thermal_rooms', 'confirm_season_change', 'sensor_season_last', 'summer_off_rooms', 'holiday_trips', 'workday_plans', 'boiler_manual_targets']) {
+  for (const key of ['manual_target_hold', 'alarm_pause', 'season_follow', 'seasonal_sources', 'air_rooms', 'thermal_rooms', 'confirm_season_change', 'sensor_season_last', 'summer_off_rooms', 'holiday_trips', 'workday_plans', 'boiler_manual_targets', 'boiler_climate']) {
     if (key in s) this._config[key] = s[key];
   }
   // Weekdays flags and view (persist across refresh) — skip if editor preview forbids overrides
@@ -6652,7 +6702,7 @@ class ThermostatTimelineCard extends HTMLElement {
               global_profile: this._globalProfile || null,
               boiler_enabled: !!this._config.boiler_enabled,
               boiler_switch: String(this._config.boiler_switch || ''),
-              boiler_switch_domain: String((this._config.boiler_switch_domain === 'input_boolean') ? 'input_boolean' : 'switch'),
+              boiler_switch_domain: String(ttBoilerDom(this._config.boiler_switch_domain)),
               boiler_rooms: Array.isArray(this._config.boiler_rooms) ? this._config.boiler_rooms.filter(Boolean).map(String) : null,
               boiler_on_offset: (this._config.boiler_on_offset === null || this._config.boiler_on_offset === undefined) ? null : Number(this._config.boiler_on_offset),
               boiler_off_offset: (this._config.boiler_off_offset === null || this._config.boiler_off_offset === undefined) ? null : Number(this._config.boiler_off_offset),
@@ -6671,7 +6721,7 @@ class ThermostatTimelineCard extends HTMLElement {
                     const dom = String(r.switch_domain || '').toLowerCase().trim();
                     const onOff = Number(r.on_offset);
                     const offOff = Number(r.off_offset);
-                    const obj = { enabled, switch: sw, switch_domain: (dom === 'input_boolean') ? 'input_boolean' : 'switch' };
+                    const obj = { enabled, switch: sw, switch_domain: ttBoilerDom(dom) };
                     if (Number.isFinite(onOff)) obj.on_offset = onOff;
                     if (Number.isFinite(offOff)) obj.off_offset = offOff;
                     if (enabled || sw || Number.isFinite(onOff) || Number.isFinite(offOff) || dom) out[String(k)] = obj;
@@ -7327,6 +7377,7 @@ class ThermostatTimelineCard extends HTMLElement {
         alarm_pause: { ...this._config.alarm_pause },
         workday_plans: { ...this._config.workday_plans },
         boiler_manual_targets: !!this._config.boiler_manual_targets,
+        boiler_climate: { ...this._config.boiler_climate },
         summer_off_rooms: [...(this._config.summer_off_rooms || [])],
         holiday_trips: [...(this._config.holiday_trips || [])],
         season_follow: { ...this._config.season_follow },
@@ -7372,7 +7423,7 @@ class ThermostatTimelineCard extends HTMLElement {
 
         boiler_enabled: !!this._config.boiler_enabled,
         boiler_switch: String(this._config.boiler_switch || ''),
-        boiler_switch_domain: String((this._config.boiler_switch_domain === 'input_boolean') ? 'input_boolean' : 'switch'),
+        boiler_switch_domain: String(ttBoilerDom(this._config.boiler_switch_domain)),
         boiler_rooms: Array.isArray(this._config.boiler_rooms) ? this._config.boiler_rooms.filter(Boolean).map(String) : null,
         boiler_on_offset: (this._config.boiler_on_offset === null || this._config.boiler_on_offset === undefined) ? null : Number(this._config.boiler_on_offset),
         boiler_off_offset: (this._config.boiler_off_offset === null || this._config.boiler_off_offset === undefined) ? null : Number(this._config.boiler_off_offset),
@@ -7391,6 +7442,7 @@ class ThermostatTimelineCard extends HTMLElement {
         alarm_pause: { ...this._config.alarm_pause },
         workday_plans: { ...this._config.workday_plans },
         boiler_manual_targets: !!this._config.boiler_manual_targets,
+        boiler_climate: { ...this._config.boiler_climate },
         summer_off_rooms: [...(this._config.summer_off_rooms || [])],
         holiday_trips: [...(this._config.holiday_trips || [])],
         season_follow: { ...this._config.season_follow },
@@ -7454,9 +7506,9 @@ class ThermostatTimelineCard extends HTMLElement {
             try {
               const sw = String(this._config.boiler_switch || '');
               const dom = sw.split('.')[0];
-              if (dom === 'input_boolean' || dom === 'switch') return dom;
+              if (dom === 'input_boolean' || dom === 'switch' || dom === 'climate') return dom;
               const raw = String(this._config.boiler_switch_domain || '').toLowerCase().trim();
-              return (raw === 'input_boolean') ? 'input_boolean' : 'switch';
+              return ttBoilerDom(raw);
             } catch { return 'switch'; }
           })(),
         boiler_rooms: Array.isArray(this._config.boiler_rooms) ? this._config.boiler_rooms.filter(Boolean).map(String) : null,
@@ -7477,7 +7529,7 @@ class ThermostatTimelineCard extends HTMLElement {
               const dom = String(r.switch_domain || '').toLowerCase().trim();
               const onOff = Number(r.on_offset);
               const offOff = Number(r.off_offset);
-              const obj = { enabled, switch: sw, switch_domain: (dom === 'input_boolean') ? 'input_boolean' : 'switch' };
+              const obj = { enabled, switch: sw, switch_domain: ttBoilerDom(dom) };
               if (Number.isFinite(onOff)) obj.on_offset = toStore(onOff);
               if (Number.isFinite(offOff)) obj.off_offset = toStore(offOff);
               if (enabled || sw || Number.isFinite(onOff) || Number.isFinite(offOff) || dom) out[String(k)] = obj;
@@ -8463,7 +8515,7 @@ class ThermostatTimelineCard extends HTMLElement {
       const map = (this._config?.room_pause && typeof this._config.room_pause === 'object') ? this._config.room_pause : {};
       const entry = map[key];
       if (!entry || typeof entry !== 'object') return { indef: false, until_ms: 0 };
-      return { indef: !!entry.indef, until_ms: Number(entry.until_ms || 0) };
+      return { indef: !!entry.indef, until_ms: Number(entry.until_ms || 0), source: entry.source || '', target_c: entry.target_c };
     } catch { return { indef: false, until_ms: 0 }; }
   }
   _isRoomPaused(eid){
@@ -8491,6 +8543,109 @@ class ThermostatTimelineCard extends HTMLElement {
       if (h>0) return `${h}:${pad(m)}:${pad(s)}`;
       return `${m}:${pad(s)}`;
     } catch { return ''; }
+  }
+  // --- Boost (handled by the integration so it survives restarts and is in the backups) ---
+  _roomBoostInfo(eid){
+    try {
+      const info = this._roomPauseInfo(eid);
+      if (info.source !== 'boost' || !(info.until_ms > Date.now())) return null;
+      return info;
+    } catch { return null; }
+  }
+  _boostedRooms(){
+    try {
+      const map = (this._config?.room_pause && typeof this._config.room_pause === 'object') ? this._config.room_pause : {};
+      return Object.keys(map).filter(k => this._roomBoostInfo(k));
+    } catch { return []; }
+  }
+  _fmtClock(ms){
+    const d = new Date(Number(ms || 0));
+    const hh = d.getHours(), mm = String(d.getMinutes()).padStart(2, '0');
+    if (this._config?.time_12h) { let h = hh % 12; if (h === 0) h = 12; return `${h}:${mm} ${hh < 12 ? 'AM' : 'PM'}`; }
+    return `${String(hh).padStart(2, '0')}:${mm}`;
+  }
+  _renderBoostBox(){
+    const root = this.shadowRoot;
+    if (!root) return;
+    const box = root.querySelector('.boost-box');
+    if (!box) return;
+    const target = this._pauseRoomTargetEid;
+    const isF = String(this._config?.temp_unit || 'C').toUpperCase() === 'F';
+    const unit = isF ? '°F' : '°C';
+    const set = (sel, txt) => { const el = root.querySelector(sel); if (el) el.textContent = txt; };
+    set('.boost-title-text', this._t('boost.title'));
+    set('.boost-raise-label', this._t('boost.raise'));
+    set('.boost-duration-label', this._t('boost.duration'));
+    set('.boost-start', this._t('boost.start'));
+    set('.boost-stop', this._t('boost.stop'));
+    const delta = root.querySelector('.boost-delta');
+    if (delta && !delta.options.length) {
+      const steps = isF ? [1, 2, 3, 4, 5, 6] : [0.5, 1, 1.5, 2, 3, 4];
+      delta.innerHTML = steps.map(v => `<option value="${v}">+${String(v).replace('.', ',')} ${unit}</option>`).join('');
+      delta.value = isF ? '2' : '1';
+    }
+    const dur = root.querySelector('.boost-duration');
+    if (dur && !dur.options.length) {
+      dur.innerHTML = `<option value="0">${this._t('boost.until_block')}</option>` +
+        [30, 60, 120, 180].map(m => `<option value="${m}">${this._t('boost.minutes').replace('{m}', m)}</option>`).join('');
+    }
+    const integration = !!this._config?.storage_enabled;
+    const startBtn = root.querySelector('.boost-start');
+    if (startBtn) startBtn.disabled = !integration;
+    let status = integration ? '' : this._t('boost.needs_integration');
+    let active = false;
+    if (target) {
+      const info = this._roomBoostInfo(target);
+      if (info) {
+        active = true;
+        const t = Number(info.target_c);
+        const shown = Number.isFinite(t) ? `${(isF ? t * 9 / 5 + 32 : t).toFixed(1).replace('.0', '')} ${unit}` : '';
+        status = this._t('boost.active').replace('{time}', this._fmtClock(info.until_ms)).replace('{temp}', shown);
+      }
+    } else {
+      const n = this._boostedRooms().length;
+      if (n) { active = true; status = this._t('boost.active_rooms').replace('{n}', n); }
+    }
+    set('.boost-status', status);
+    const stopBtn = root.querySelector('.boost-stop');
+    if (stopBtn) stopBtn.style.display = (active && integration) ? '' : 'none';
+  }
+  _haUsesF(){
+    try { return String(this._hass?.config?.unit_system?.temperature || '').includes('F'); } catch { return false; }
+  }
+  async _startBoost(target){
+    try {
+      if (!this._hass || !this._config?.storage_enabled) return;
+      const root = this.shadowRoot;
+      const cardF = String(this._config?.temp_unit || 'C').toUpperCase() === 'F';
+      const raw = Number(root.querySelector('.boost-delta')?.value || 1);
+      const deltaC = cardF ? raw * 5 / 9 : raw;
+      const data = { delta: Math.round((this._haUsesF() ? deltaC * 9 / 5 : deltaC) * 10) / 10 };
+      const minutes = Number(root.querySelector('.boost-duration')?.value || 0);
+      if (minutes > 0) data.duration_minutes = minutes;
+      if (target) data.entity_id = [this._roomPauseKey(target)];
+      const iid = this._instanceId ? this._instanceId() : '';
+      if (iid) data.instance_id = iid;
+      await this._hass.callService('thermostat_timeline', 'boost', data);
+      root.querySelector('.overlay-pause')?.classList.remove('open');
+      this._pauseRoomTargetEid = null;
+    } catch (e) {
+      try { alert(String(e?.message || e)); } catch {}
+    }
+  }
+  async _stopBoost(target){
+    try {
+      if (!this._hass) return;
+      const data = {};
+      if (target) data.entity_id = [this._roomPauseKey(target)];
+      const iid = this._instanceId ? this._instanceId() : '';
+      if (iid) data.instance_id = iid;
+      await this._hass.callService('thermostat_timeline', 'cancel_boost', data);
+      this.shadowRoot.querySelector('.overlay-pause')?.classList.remove('open');
+      this._pauseRoomTargetEid = null;
+    } catch (e) {
+      try { alert(String(e?.message || e)); } catch {}
+    }
   }
   async _applyRoomCurrentSetpoints(eid){
     try {
@@ -9172,6 +9327,14 @@ class ThermostatTimelineCard extends HTMLElement {
   .row-pause-btn{ width:22px; height:22px; border-radius:999px; border:1px solid var(--divider-color); background: transparent; color: var(--secondary-text-color); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
   .row-pause-btn ha-icon{ --mdc-icon-size: 16px; }
   .row-pause-btn.paused{ background: var(--error-color); border-color: var(--error-color); color: var(--text-primary-color, #fff); }
+  .row-boost-btn.active{ background: var(--warning-color, #ff9800); border-color: var(--warning-color, #ff9800); color: var(--text-primary-color, #fff); }
+  .boost-box{ margin-top:14px; padding-top:12px; border-top:1px solid var(--divider-color); display:grid; gap:8px; }
+  .boost-title{ display:flex; align-items:center; gap:6px; font-weight:600; }
+  .boost-title ha-icon{ --mdc-icon-size:20px; color: var(--warning-color, #ff9800); }
+  .boost-row{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+  .boost-field{ display:grid; gap:4px; font-size:.85rem; color: var(--secondary-text-color); }
+  .boost-status{ font-size:.9rem; color: var(--secondary-text-color); }
+  .boost-actions{ display:flex; gap:8px; flex-wrap:wrap; }
   .row-pause-eta{ font-size:.7rem; color: var(--secondary-text-color); white-space:nowrap; padding:1px 6px; border:1px solid var(--divider-color); border-radius:999px; background: var(--secondary-background-color, rgba(0,0,0,.05)); }
 
     .btn{cursor:pointer;border:1px solid var(--divider-color);border-radius:10px;padding:6px 10px;font-size:.8rem;background:var(--card-background-color);color:var(--primary-text-color)}
@@ -9705,6 +9868,18 @@ class ThermostatTimelineCard extends HTMLElement {
               <button type="button" class="btn success pause-resume"></button>
               <button type="button" class="btn danger pause-close"></button>
             </div>
+            <div class="boost-box">
+              <div class="boost-title"><ha-icon icon="mdi:fire"></ha-icon><span class="boost-title-text"></span></div>
+              <div class="boost-row">
+                <label class="boost-field"><span class="boost-raise-label"></span><select class="settings-input boost-delta"></select></label>
+                <label class="boost-field"><span class="boost-duration-label"></span><select class="settings-input boost-duration"></select></label>
+              </div>
+              <div class="boost-status"></div>
+              <div class="boost-actions">
+                <button type="button" class="btn primary boost-start"></button>
+                <button type="button" class="btn ghost boost-stop"></button>
+              </div>
+            </div>
           </div>
         </div>
         <!-- In-card Settings (moved out of HA editor over time) -->
@@ -10047,10 +10222,13 @@ class ThermostatTimelineCard extends HTMLElement {
         if (t) this._resumeRoomNow(t); else this._resumeNow();
       });
       bx?.addEventListener('click', ()=>{ try { ov?.classList.remove('open'); this._pauseRoomTargetEid = null; } catch {} });
+      this.shadowRoot.querySelector('.boost-start')?.addEventListener('click', ()=>{ this._startBoost(this._pauseRoomTargetEid); });
+      this.shadowRoot.querySelector('.boost-stop')?.addEventListener('click', ()=>{ this._stopBoost(this._pauseRoomTargetEid); });
     } catch {}
   }
 
   _renderPauseStatus(){
+    try { this._renderBoostBox(); } catch {}
     try {
       const st = this.shadowRoot && this.shadowRoot.querySelector('.pause-status');
       const titleEl = this.shadowRoot && this.shadowRoot.querySelector('.pause-title');
@@ -11428,7 +11606,8 @@ class ThermostatTimelineCard extends HTMLElement {
       // Per-room pause button: opens the same pause modal used by the global
       // header button, but scoped to this room (this._pauseRoomTargetEid).
       try {
-        const roomPaused = this._isRoomPaused ? this._isRoomPaused(eid) : false;
+        const boostInfo = this._roomBoostInfo ? this._roomBoostInfo(eid) : null;
+        const roomPaused = (this._isRoomPaused ? this._isRoomPaused(eid) : false) && !boostInfo;
         const pauseWrap = document.createElement('span');
         pauseWrap.className = 'row-pause-toggle';
         const pauseIconBtn = document.createElement('button');
@@ -11455,6 +11634,29 @@ class ThermostatTimelineCard extends HTMLElement {
           } catch {}
         });
         pauseWrap.append(pauseIconBtn);
+        // Boost button: same modal, boost section at the bottom.
+        const boostBtn = document.createElement('button');
+        boostBtn.type = 'button';
+        boostBtn.className = 'row-pause-btn row-boost-btn' + (boostInfo ? ' active' : '');
+        boostBtn.title = this._t('boost.room_tooltip');
+        boostBtn.innerHTML = '<ha-icon icon="mdi:fire"></ha-icon>';
+        if (boostInfo) {
+          const eta = document.createElement('span');
+          eta.className = 'row-pause-eta';
+          eta.textContent = this._formatRoomPauseCountdown(eid);
+          pauseWrap.append(eta);
+        }
+        boostBtn.addEventListener('click', (ev) => {
+          try {
+            ev.stopPropagation();
+            this._pauseRoomTargetEid = eid;
+            const ov = this.shadowRoot && this.shadowRoot.querySelector('.overlay-pause');
+            if (ov) ov.classList.add('open');
+            this._renderPauseStatus();
+            ov?.querySelector('.boost-box')?.scrollIntoView({ block: 'nearest' });
+          } catch {}
+        });
+        pauseWrap.append(boostBtn);
         meta.append(pauseWrap);
       } catch {}
 
@@ -12522,6 +12724,7 @@ class ThermostatTimelineCard extends HTMLElement {
         alarm_pause: { ...cfg.alarm_pause, states: [...(cfg.alarm_pause?.states || ['armed_away'])] },
         workday_plans: { ...cfg.workday_plans },
         boiler_manual_targets: !!cfg.boiler_manual_targets,
+        boiler_climate: { on_offset: 2, max_temp: 24, idle_temp: 15, ...cfg.boiler_climate },
         summer_off_rooms: [...(cfg.summer_off_rooms || [])],
         holiday_trips: [...(cfg.holiday_trips || [])],
         season_follow: { ...cfg.season_follow },
@@ -12542,10 +12745,10 @@ class ThermostatTimelineCard extends HTMLElement {
             const sw = String(cfg.boiler_switch || '');
             const fromEid = (()=>{
               const dom = String(sw||'').split('.')[0];
-              return (dom === 'input_boolean') ? 'input_boolean' : 'switch';
+              return ttBoilerDom(dom);
             })();
             const raw = String((cfg.boiler_switch_domain ?? fromEid) || '').toLowerCase().trim();
-            return (raw === 'input_boolean') ? 'input_boolean' : 'switch';
+            return ttBoilerDom(raw);
           } catch { return 'switch'; }
         })(),
         boiler_rooms: (()=>{
@@ -12751,6 +12954,7 @@ class ThermostatTimelineCard extends HTMLElement {
       cfg.alarm_pause = { ...d.alarm_pause };
       cfg.workday_plans = { ...d.workday_plans };
       cfg.boiler_manual_targets = !!d.boiler_manual_targets;
+      cfg.boiler_climate = { ...d.boiler_climate };
       cfg.summer_off_rooms = [...d.summer_off_rooms];
       cfg.holiday_trips = [...d.holiday_trips];
       cfg.season_follow = { ...d.season_follow };
@@ -12860,9 +13064,9 @@ class ThermostatTimelineCard extends HTMLElement {
       cfg.boiler_switch = String(d.boiler_switch || '');
       try {
         const raw = String(d.boiler_switch_domain || '').toLowerCase().trim();
-        const rawDom = (raw === 'input_boolean') ? 'input_boolean' : 'switch';
+        const rawDom = ttBoilerDom(raw);
         const swDom = String(cfg.boiler_switch || '').split('.')[0];
-        if (cfg.boiler_switch && (swDom === 'switch' || swDom === 'input_boolean')) {
+        if (cfg.boiler_switch && (swDom === 'switch' || swDom === 'input_boolean' || swDom === 'climate')) {
           cfg.boiler_switch_domain = swDom;
         } else {
           cfg.boiler_switch_domain = rawDom;
@@ -12916,9 +13120,9 @@ class ThermostatTimelineCard extends HTMLElement {
           const sw = String(raw.switch || '').trim();
           const domFromEid = (sw ? String(sw).split('.')[0] : '');
           const rawDom = String(raw.switch_domain || '').toLowerCase().trim();
-          const dom = (domFromEid === 'input_boolean' || domFromEid === 'switch')
+          const dom = (domFromEid === 'input_boolean' || domFromEid === 'switch' || domFromEid === 'climate')
             ? domFromEid
-            : ((rawDom === 'input_boolean') ? 'input_boolean' : 'switch');
+            : (ttBoilerDom(rawDom));
           const onOff = clampOffsetLocal(raw.on_offset, this._ttCoerceNum(cfg.boiler_on_offset, 0));
           const offOff = clampOffsetLocal(raw.off_offset, this._ttCoerceNum(cfg.boiler_off_offset, 0));
           const hasAny = enabled || sw || Number.isFinite(Number(raw.on_offset)) || Number.isFinite(Number(raw.off_offset)) || !!raw.switch_domain;
@@ -15860,9 +16064,31 @@ class ThermostatTimelineCard extends HTMLElement {
                 <select class="settings-input sp-boiler-switch-domain">
                   <option value="switch">Switch</option>
                   <option value="input_boolean">Input boolean</option>
+                  <option value="climate">Climate (thermostaat)</option>
                 </select>
               </div>
               <tt-entity-picker class="sp-boiler-switch-picker" include-domains='["switch"]'></tt-entity-picker>
+            </div>
+            <div class="setting sp-boiler-climate-setting" style="grid-template-columns: 1fr;">
+              <div class="text">
+                <div class="title sp-boiler-climate-title"></div>
+                <div class="desc sp-boiler-climate-desc"></div>
+              </div>
+              <div class="grid2" style="margin-top:6px;">
+                <div class="sfield">
+                  <div class="slabel sp-boiler-climate-on-label"></div>
+                  <input class="settings-input sp-boiler-climate-on" type="number" step="0.5" min="0.5" max="10" />
+                </div>
+                <div class="sfield">
+                  <div class="slabel sp-boiler-climate-max-label"></div>
+                  <input class="settings-input sp-boiler-climate-max" type="number" step="0.5" min="10" max="35" />
+                </div>
+                <div class="sfield">
+                  <div class="slabel sp-boiler-climate-idle-label"></div>
+                  <input class="settings-input sp-boiler-climate-idle" type="number" step="0.5" min="5" max="30" />
+                </div>
+              </div>
+              <div class="desc sp-boiler-climate-idle-desc" style="margin-top:4px;"></div>
             </div>
             <div class="setting sp-boiler-rooms-setting" style="grid-template-columns: 1fr;">
               <div class="text">
@@ -15912,6 +16138,27 @@ class ThermostatTimelineCard extends HTMLElement {
         if (offRow) offRow.style.display = (boilerOn && !multiOn) ? '' : 'none';
         if (multiRow) multiRow.style.display = boilerOn ? '' : 'none';
         if (multiRoomsRow) multiRoomsRow.style.display = (boilerOn && multiOn) ? '' : 'none';
+        const climRow = q('.overlay-settings .sp-boiler-climate-setting');
+        if (climRow) {
+          const anyClimate = multiOn
+            ? Object.values(d.boiler_room_settings || {}).some(r => r && r.enabled && (String(r.switch || '').startsWith('climate.') || r.switch_domain === 'climate'))
+            : (ttBoilerDom(d.boiler_switch_domain) === 'climate' || String(d.boiler_switch || '').startsWith('climate.'));
+          climRow.style.display = (boilerOn && anyClimate) ? '' : 'none';
+          d.boiler_climate = { on_offset: 2, max_temp: 24, idle_temp: 15, ...(d.boiler_climate || {}) };
+          const setTxt = (sel, key) => { const el = q('.overlay-settings ' + sel); if (el) el.textContent = this._t(key); };
+          setTxt('.sp-boiler-climate-title', 'boiler.climate_title');
+          setTxt('.sp-boiler-climate-desc', 'boiler.climate_desc');
+          setTxt('.sp-boiler-climate-on-label', 'boiler.climate_on_offset');
+          setTxt('.sp-boiler-climate-max-label', 'boiler.climate_max');
+          setTxt('.sp-boiler-climate-idle-label', 'boiler.climate_idle');
+          setTxt('.sp-boiler-climate-idle-desc', 'boiler.climate_idle_desc');
+          for (const [sel, key] of [['.sp-boiler-climate-on', 'on_offset'], ['.sp-boiler-climate-max', 'max_temp'], ['.sp-boiler-climate-idle', 'idle_temp']]) {
+            const el = q('.overlay-settings ' + sel);
+            if (!el) continue;
+            el.value = String(d.boiler_climate[key]);
+            el.onchange = () => { const v = Number(el.value); if (Number.isFinite(v)) d.boiler_climate = { ...d.boiler_climate, [key]: v }; };
+          }
+        }
       } catch {}
 
       // Master toggle
@@ -15932,9 +16179,9 @@ class ThermostatTimelineCard extends HTMLElement {
         const p = q('.overlay-settings .sp-boiler-switch-picker');
         const swDom = String(d.boiler_switch || '').split('.')[0];
         const raw = String(d.boiler_switch_domain || '').toLowerCase().trim();
-        const dom = (swDom === 'input_boolean' || swDom === 'switch')
+        const dom = (swDom === 'input_boolean' || swDom === 'switch' || swDom === 'climate')
           ? swDom
-          : ((raw === 'input_boolean') ? 'input_boolean' : 'switch');
+          : (ttBoilerDom(raw));
         try { d.boiler_switch_domain = dom; } catch {}
         if (domSel) domSel.value = dom;
         if (p) {
@@ -16011,9 +16258,9 @@ class ThermostatTimelineCard extends HTMLElement {
             const sw = String(raw?.switch || '');
             const domFromEid = (sw ? String(sw).split('.')[0] : '');
             const rawDom = String(raw?.switch_domain || '').toLowerCase().trim();
-            const dom = (domFromEid === 'input_boolean' || domFromEid === 'switch')
+            const dom = (domFromEid === 'input_boolean' || domFromEid === 'switch' || domFromEid === 'climate')
               ? domFromEid
-              : ((rawDom === 'input_boolean') ? 'input_boolean' : 'switch');
+              : (ttBoilerDom(rawDom));
             const onOff = Number.isFinite(Number(raw?.on_offset)) ? Number(raw.on_offset) : Number(d.boiler_on_offset ?? 0);
             const offOff = Number.isFinite(Number(raw?.off_offset)) ? Number(raw.off_offset) : Number(d.boiler_off_offset ?? 0);
             const enabled = !!raw?.enabled;
@@ -16175,11 +16422,11 @@ class ThermostatTimelineCard extends HTMLElement {
             domLabel.textContent = this._t('boiler.switch_type') || 'Entity type';
             const domSel = document.createElement('select');
             domSel.className = 'settings-input';
-            domSel.innerHTML = '<option value="switch">Switch</option><option value="input_boolean">Input boolean</option>';
-            domSel.value = (cfg.switch_domain === 'input_boolean') ? 'input_boolean' : 'switch';
+            domSel.innerHTML = '<option value="switch">Switch</option><option value="input_boolean">Input boolean</option><option value="climate">Climate (thermostaat)</option>';
+            domSel.value = ttBoilerDom(cfg.switch_domain);
             domSel.addEventListener('change', (e)=>{
               const v = String(e?.target?.value || '').toLowerCase().trim();
-              updateRoomCfg(eid, { switch_domain: (v === 'input_boolean') ? 'input_boolean' : 'switch', switch: '' });
+              updateRoomCfg(eid, { switch_domain: ttBoilerDom(v), switch: '' });
               this._renderSettingsPopupBoilerTab();
             });
             domRow.append(domLabel, domSel);
@@ -16187,14 +16434,14 @@ class ThermostatTimelineCard extends HTMLElement {
             const pick = document.createElement('tt-entity-picker');
             try { pick.style.display = 'block'; pick.style.minHeight = '48px'; pick.style.maxWidth = '440px'; } catch {}
             try { pick.hass = this._hass; } catch {}
-            pick.setAttribute('include-domains', JSON.stringify([(cfg.switch_domain === 'input_boolean') ? 'input_boolean' : 'switch']));
+            pick.setAttribute('include-domains', JSON.stringify([ttBoilerDom(cfg.switch_domain)]));
             pick.setAttribute('label', this._t('boiler.switch') || 'Boiler switch');
             try { pick.value = String(cfg.switch || ''); } catch {}
             pick.addEventListener('value-changed', (e)=>{
               try {
                 const v = String(e.detail?.value || '');
                 const dom = String(v||'').split('.')[0];
-                const domVal = (dom === 'input_boolean') ? 'input_boolean' : 'switch';
+                const domVal = ttBoilerDom(dom);
                 updateRoomCfg(eid, { switch: v, switch_domain: domVal });
                 this._renderSettingsPopupBoilerTab();
               } catch {}
@@ -16322,8 +16569,8 @@ class ThermostatTimelineCard extends HTMLElement {
               const v = String(e.detail?.value || '');
               this._settingsDraft.boiler_switch = v;
               const dom = String(v||'').split('.')[0];
-              if (dom === 'switch' || dom === 'input_boolean') {
-                this._settingsDraft.boiler_switch_domain = (dom === 'input_boolean') ? 'input_boolean' : 'switch';
+              if (dom === 'switch' || dom === 'input_boolean' || dom === 'climate') {
+                this._settingsDraft.boiler_switch_domain = ttBoilerDom(dom);
                 this._renderSettingsPopupBoilerTab();
               }
             } catch {}
@@ -16336,7 +16583,7 @@ class ThermostatTimelineCard extends HTMLElement {
             try {
               if (!this._settingsDraft) return;
               const v = String(e?.target?.value || '').toLowerCase().trim();
-              this._settingsDraft.boiler_switch_domain = (v === 'input_boolean') ? 'input_boolean' : 'switch';
+              this._settingsDraft.boiler_switch_domain = ttBoilerDom(v);
               // Clear selected entity when changing type to avoid mismatch
               this._settingsDraft.boiler_switch = '';
               this._renderSettingsPopupBoilerTab();
@@ -17422,6 +17669,7 @@ class ThermostatTimelineCard extends HTMLElement {
       if (JSON.stringify(d.manual_target_hold) !== JSON.stringify(c.manual_target_hold || {})) return true;
       if (JSON.stringify(d.workday_plans) !== JSON.stringify(c.workday_plans || {})) return true;
       if (!!d.boiler_manual_targets !== !!c.boiler_manual_targets) return true;
+      if (JSON.stringify(d.boiler_climate) !== JSON.stringify({ on_offset: 2, max_temp: 24, idle_temp: 15, ...c.boiler_climate })) return true;
       if (JSON.stringify(d.summer_off_rooms) !== JSON.stringify(c.summer_off_rooms || [])) return true;
       if (JSON.stringify(d.holiday_trips) !== JSON.stringify(c.holiday_trips || [])) return true;
       if (JSON.stringify(d.air_rooms) !== JSON.stringify(c.air_rooms || {})) return true;
@@ -17444,9 +17692,9 @@ class ThermostatTimelineCard extends HTMLElement {
       // boiler_switch_domain: normalize to switch/input_boolean
       try {
         const normDom = (eid, raw)=>{
-          const fromEid = (()=>{ const dom = String(eid||'').split('.')[0]; return (dom === 'input_boolean') ? 'input_boolean' : 'switch'; })();
+          const fromEid = (()=>{ const dom = String(eid||'').split('.')[0]; return ttBoilerDom(dom); })();
           const s = String((raw ?? fromEid) || '').toLowerCase().trim();
-          return (s === 'input_boolean') ? 'input_boolean' : 'switch';
+          return ttBoilerDom(s);
         };
         const dDom = normDom(d.boiler_switch, d.boiler_switch_domain);
         const cDom = normDom(c.boiler_switch, c.boiler_switch_domain);
@@ -17492,9 +17740,9 @@ class ThermostatTimelineCard extends HTMLElement {
             const sw = String(raw.switch || '').trim();
             const domFromEid = (sw ? String(sw).split('.')[0] : '');
             const rawDom = String(raw.switch_domain || '').toLowerCase().trim();
-            const dom = (domFromEid === 'input_boolean' || domFromEid === 'switch')
+            const dom = (domFromEid === 'input_boolean' || domFromEid === 'switch' || domFromEid === 'climate')
               ? domFromEid
-              : ((rawDom === 'input_boolean') ? 'input_boolean' : 'switch');
+              : (ttBoilerDom(rawDom));
             const onOff = Number.isFinite(Number(raw.on_offset)) ? Math.max(-10, Math.min(10, Number(raw.on_offset))) : this._ttCoerceNum(c.boiler_on_offset, 0);
             const offOff = Number.isFinite(Number(raw.off_offset)) ? Math.max(-10, Math.min(10, Number(raw.off_offset))) : this._ttCoerceNum(c.boiler_off_offset, 0);
             const hasAny = enabled || sw || raw.on_offset !== undefined || raw.off_offset !== undefined || raw.switch_domain;

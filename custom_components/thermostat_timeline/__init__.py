@@ -34,6 +34,11 @@ from .room_air import RoomAir, adjustment
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
+# Entity domains that can act as a heat source ("boiler").
+# switch/input_boolean are turned on/off; a climate entity (e.g. a Nefit Easy
+# or other OpenTherm room thermostat) gets its setpoint raised instead.
+BOILER_DOMAINS = ("switch", "input_boolean", "climate")
+
 _LOGGER = logging.getLogger(__name__)
 
 def _norm_instance_id(raw: Any) -> str:
@@ -1353,6 +1358,47 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         schema=vol.Schema({**pause_fields, vol.Optional("duration_minutes"): vol.All(vol.Coerce(int), vol.Range(min=1, max=525600))}))
     hass.services.async_register(DOMAIN, "resume_schedule", change_schedule_pause,
         schema=vol.Schema(pause_fields))
+    def _boost_manager(call: ServiceCall):
+        _ensure_instances_loaded(hass)
+        store_data = hass.data[DOMAIN]
+        iid = _norm_instance_id(call.data.get("instance_id", store_data.get("active_instance_id")))
+        manager = store_data.get("manager")
+        mgr = manager.get(iid) if manager else None
+        if mgr is None:
+            raise ServiceValidationError(f"Timeline instance {iid} is not active")
+        return mgr
+
+    async def boost(call: ServiceCall):
+        mgr = _boost_manager(call)
+        temperature = call.data.get("temperature")
+        delta = call.data.get("delta")
+        if temperature is None and delta is None:
+            delta = 1.0
+        if temperature is not None and mgr._ha_uses_fahrenheit():
+            temperature = _f_to_c(temperature)
+        if delta is not None and mgr._ha_uses_fahrenheit():
+            delta = float(delta) * 5.0 / 9.0
+        boosted = await mgr.async_boost(
+            rooms=call.data.get("entity_id"), temperature_c=temperature, delta_c=delta,
+            minutes=call.data.get("duration_minutes"),
+        )
+        if not boosted:
+            raise ServiceValidationError("No Timeline room could be boosted.")
+
+    async def cancel_boost(call: ServiceCall):
+        await _boost_manager(call).async_cancel_boost(call.data.get("entity_id"))
+
+    boost_fields = {
+        vol.Optional("entity_id"): cv.entity_ids,
+        vol.Optional("instance_id"): cv.string,
+    }
+    hass.services.async_register(DOMAIN, "boost", boost, schema=vol.Schema({
+        **boost_fields,
+        vol.Exclusive("temperature", "boost_target"): vol.Coerce(float),
+        vol.Exclusive("delta", "boost_target"): vol.All(vol.Coerce(float), vol.Range(min=-10, max=10)),
+        vol.Optional("duration_minutes"): vol.All(vol.Coerce(int), vol.Range(min=1, max=1440)),
+    }))
+    hass.services.async_register(DOMAIN, "cancel_boost", cancel_boost, schema=vol.Schema(boost_fields))
     hass.services.async_register(DOMAIN, "set_store", set_store)
     hass.services.async_register(DOMAIN, "clear_store", clear_store)
     hass.services.async_register(DOMAIN, "factory_reset", factory_reset)
@@ -1437,6 +1483,8 @@ class AutoApplyManager:
         self._next_room_resume = None
         self._next_room_resume_at = None
         self._timer_generation = 0
+        self._boiler_writes = {}  # climate boiler eid -> last setpoint written (HA unit)
+        self._boiler_raised_c = {}  # climate boiler eid -> raised setpoint (°C) while heat is demanded
 
     async def async_start(self):
     # Apply once on startup and schedule next if enabled
@@ -2683,6 +2731,8 @@ class AutoApplyManager:
                                 return
                     except Exception:
                         rooms = None
+                    if rooms:
+                        rooms = self._with_merged(rooms, merges)
 
                 if rooms is None:
                     br = settings.get("boiler_rooms")
@@ -2690,6 +2740,7 @@ class AutoApplyManager:
                         rooms = [str(x).strip() for x in br if str(x).strip()]
                         if len(rooms) == 0:
                             return
+                        rooms = self._with_merged(rooms, merges)
                 if rooms is None:
                     rooms = sorted(list(self._all_targets(schedules if isinstance(schedules, dict) else {}, merges)))
 
@@ -2767,11 +2818,11 @@ class AutoApplyManager:
             value = min(value, _f_to_c(upper) if ha_is_f else float(upper))
         return value
 
-    def _manual_target_expiry(self, row, settings, primary=None):
+    def _manual_target_expiry(self, row, settings, primary=None, use_hold_minutes=True):
         """Use a fixed duration or the room's next boundary or midnight."""
         now = dt_util.now()
         hold = settings.get("manual_target_hold")
-        if isinstance(hold, dict) and hold.get("minutes") in (15, 30, 60, 120):
+        if use_hold_minutes and isinstance(hold, dict) and hold.get("minutes") in (15, 30, 60, 120):
             return (now.timestamp() + hold["minutes"] * 60) * 1000.0
         minute = now.hour * 60 + now.minute
         boundaries = [1440]
@@ -2822,6 +2873,9 @@ class AutoApplyManager:
                     return
                 if ((settings.get("air_rooms") or {}).get(primary) or {}).get("enforce"):
                     return
+                written = self._boiler_writes.get(eid)
+                if written is not None and abs(float(written) - float(temperature)) < 0.05:
+                    return  # Our own boiler setpoint, not a manual change.
                 state = self.hass.states.get(eid)
                 if state is None or state.state in ("off", "unknown", "unavailable"):
                     return
@@ -2989,7 +3043,7 @@ class AutoApplyManager:
             if room in paused:
                 reason = controls[room]
             elif hold.get("indef") or (hold.get("until_ms") or 0) > now:
-                reason = "manual temperature hold" if hold.get("source") == "manual_target" else "room pause"
+                reason = {"manual_target": "manual temperature hold", "boost": "boost"}.get(hold.get("source"), "room pause")
             reasons[room] = global_reason or reason
         previous = self._pause_snapshot
         self._pause_snapshot = reasons
@@ -3100,8 +3154,256 @@ class AutoApplyManager:
                 target = hold.get("target_c")
                 if isinstance(target, (int, float)):
                     return target
+        boost = self._active_boost(settings, self._primary_of(eid, schedules, settings))
+        if boost is not None:
+            return boost
         target = self._desired_for(eid, schedules, settings, now_min)
         return self._stored_setpoint_c(target, settings) if target is not None else None
+
+    # ------------------------------------------------------------------
+    # Rooms with several radiators, boost and climate-type boilers
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _with_merged(rooms, merges) -> list:
+        """Expand primary rooms with their merged radiator thermostats."""
+        out = []
+        merges = merges if isinstance(merges, dict) else {}
+        for room in rooms or []:
+            for eid in [room, *(merges.get(room) or [])]:
+                if isinstance(eid, str) and eid and eid not in out:
+                    out.append(eid)
+        return out
+
+    @staticmethod
+    def _primary_of(eid, schedules, settings):
+        if isinstance(schedules, dict) and eid in schedules:
+            return eid
+        for room, members in (settings.get("merges") or {}).items():
+            if eid in (members or []):
+                return room
+        return eid
+
+    @staticmethod
+    def _active_boost(settings, primary):
+        """Return the boost target (°C) when this room has a running boost."""
+        hold = (settings.get("room_pause") or {}).get(primary) or {}
+        if hold.get("source") != "boost":
+            return None
+        try:
+            if float(hold.get("until_ms") or 0) <= time.time() * 1000.0:
+                return None
+        except (TypeError, ValueError):
+            return None
+        target = hold.get("target_c")
+        return float(target) if isinstance(target, (int, float)) else None
+
+    @staticmethod
+    def _boiler_climate_cfg(settings) -> dict:
+        cfg = settings.get("boiler_climate") if isinstance(settings.get("boiler_climate"), dict) else {}
+
+        def num(key, default, lo, hi):
+            try:
+                value = float(cfg.get(key))
+            except (TypeError, ValueError):
+                return default
+            return max(lo, min(hi, value))
+
+        return {
+            # How far above its own measured temperature the boiler thermostat is set to make it fire.
+            "on_offset": num("on_offset", 2.0, 0.5, 10.0),
+            # Never raise the boiler thermostat above this (protects the room it hangs in).
+            "max_temp": num("max_temp", 24.0, 10.0, 35.0),
+            # Setpoint when no room asks for heat (only used when the boiler is not itself a scheduled room).
+            "idle_temp": num("idle_temp", 15.0, 5.0, 30.0),
+        }
+
+    async def _drive_boiler(self, entity_id: str, want, schedules, settings) -> None:
+        """Turn a boiler switch on/off, or raise/lower a climate boiler's setpoint."""
+        if want not in ("on", "off"):
+            return
+        domain = entity_id.split(".", 1)[0]
+        if domain == "climate":
+            await self._drive_climate_boiler(entity_id, want == "on", schedules, settings)
+            return
+        if domain not in ("switch", "input_boolean"):
+            return
+        st = self.hass.states.get(entity_id)
+        cur = str(st.state).lower().strip() if st else ""
+        if cur == want:
+            return
+        await self.hass.services.async_call(
+            domain, "turn_on" if want == "on" else "turn_off", {"entity_id": entity_id}, blocking=False,
+        )
+
+    async def _drive_climate_boiler(self, eid: str, demand: bool, schedules, settings) -> None:
+        st = self.hass.states.get(eid)
+        if st is None or st.state in ("unknown", "unavailable"):
+            return
+        attrs = st.attributes or {}
+        ha_is_f = self._ha_uses_fahrenheit()
+        to_c = (lambda v: _f_to_c(float(v))) if ha_is_f else (lambda v: float(v))
+        to_ha = (lambda v: _c_to_f(float(v))) if ha_is_f else (lambda v: float(v))
+        cfg = self._boiler_climate_cfg(settings)
+
+        # The boiler thermostat may also be a scheduled room (e.g. the living room):
+        # then its own schedule/hold/boost is the baseline instead of the idle temperature.
+        base_c = None
+        primary = self._primary_of(eid, schedules, settings)
+        if isinstance(schedules, dict) and primary in schedules:
+            try:
+                base_c = self._boiler_target_c(eid, schedules, settings, self._now_min())
+            except Exception:
+                base_c = None
+        if base_c is None:
+            base_c = cfg["idle_temp"]
+
+        try:
+            setpoint_c = to_c(attrs.get("temperature"))
+        except (TypeError, ValueError):
+            setpoint_c = None
+        try:
+            measured_c = to_c(attrs.get("current_temperature"))
+        except (TypeError, ValueError):
+            measured_c = None
+
+        if demand:
+            if setpoint_c is not None and measured_c is not None and setpoint_c >= measured_c + 0.5 and setpoint_c >= base_c:
+                # Still above its own room temperature: the boiler keeps firing, leave it alone.
+                self._boiler_raised_c[eid] = setpoint_c
+                return
+            ref = measured_c if measured_c is not None else base_c
+            target_c = max(base_c, min(cfg["max_temp"], ref + cfg["on_offset"]))
+            self._boiler_raised_c[eid] = target_c
+        else:
+            target_c = base_c
+            self._boiler_raised_c.pop(eid, None)
+
+        target_c = self._clamp_climate_setpoint_c(target_c, attrs, ha_is_f)
+        if setpoint_c is not None and abs(setpoint_c - target_c) < 0.1:
+            return
+
+        modes = [str(m).lower() for m in (attrs.get("hvac_modes") or [])]
+        if demand and str(st.state).lower() == "off" and "heat" in modes:
+            await self.hass.services.async_call(
+                "climate", "set_hvac_mode", {"entity_id": eid, "hvac_mode": "heat"}, blocking=True)
+        presets = attrs.get("preset_modes") or []
+        current_preset = str(attrs.get("preset_mode") or "").lower()
+        for preset in presets:
+            if str(preset).lower() in ("manual", "hold") and current_preset != str(preset).lower():
+                try:
+                    await self.hass.services.async_call(
+                        "climate", "set_preset_mode", {"entity_id": eid, "preset_mode": preset}, blocking=True)
+                except Exception:
+                    pass
+                break
+        value = round(to_ha(target_c), 1)
+        self._boiler_writes[eid] = value
+        _LOGGER.info("ThermostatTimeline boiler %s: demand=%s setpoint=%s", eid, demand, value)
+        await self.hass.services.async_call(
+            "climate", "set_temperature", {"entity_id": eid, "temperature": value}, blocking=False)
+
+    async def _set_room_temp_c(self, eid: str, target_c: float) -> None:
+        """Send a boost temperature straight to one thermostat (bypasses the pause gate)."""
+        st = self.hass.states.get(eid)
+        if st is None or st.state in ("unknown", "unavailable"):
+            return
+        ha_is_f = self._ha_uses_fahrenheit()
+        if eid.startswith("input_number."):
+            value = _c_to_f(target_c) if ha_is_f else target_c
+            await self.hass.services.async_call(
+                "input_number", "set_value", {"entity_id": eid, "value": round(value, 1)}, blocking=False)
+            return
+        if not eid.startswith("climate."):
+            return
+        attrs = st.attributes or {}
+        modes = [str(m).lower() for m in (attrs.get("hvac_modes") or [])]
+        if str(st.state).lower() == "off" and "heat" in modes:
+            await self.hass.services.async_call(
+                "climate", "set_hvac_mode", {"entity_id": eid, "hvac_mode": "heat"}, blocking=True)
+        target_c = self._clamp_climate_setpoint_c(target_c, attrs, ha_is_f)
+        value = round(_c_to_f(target_c) if ha_is_f else target_c, 1)
+        await self.hass.services.async_call(
+            "climate", "set_temperature", {"entity_id": eid, "temperature": value}, blocking=False)
+
+    def _boost_rooms(self, rooms, schedules, settings) -> list:
+        if rooms:
+            return [room for room in rooms if room in schedules]
+        apply_map = settings.get("apply_enabled") or {}
+        return [room for room in schedules
+                if isinstance(room, str) and room.startswith(("climate.", "input_number."))
+                and apply_map.get(room, True)]
+
+    async def async_boost(self, rooms=None, temperature_c=None, delta_c=None, minutes=None) -> dict:
+        """Temporarily raise rooms; they return to the schedule at the next block or after `minutes`."""
+        async with self._manual_target_lock:
+            schedules, settings = self._get_data()
+            merges = settings.get("merges") or {}
+            now_ms = time.time() * 1000.0
+            max_c = None
+            try:
+                if settings.get("max_temp") is not None:
+                    max_c = self._stored_setpoint_c(settings.get("max_temp"), settings)
+            except (TypeError, ValueError):
+                max_c = None
+            pauses = dict(settings.get("room_pause") or {})
+            boosted = {}
+            for room in self._boost_rooms(rooms, schedules, settings):
+                row = schedules.get(room)
+                if not isinstance(row, dict):
+                    continue
+                existing = pauses.get(room) or {}
+                if existing.get("indef") and existing.get("source") not in ("boost", "manual_target"):
+                    continue  # Keep explicit indefinite pauses chosen by the user.
+                if temperature_c is not None:
+                    target = float(temperature_c)
+                else:
+                    desired = self._desired_for(room, schedules, settings, self._now_min())
+                    if desired is None:
+                        continue
+                    target = self._stored_setpoint_c(desired, settings) + float(delta_c or 0.0)
+                if max_c is not None:
+                    target = min(target, max_c)
+                target = round(target * 2) / 2  # half degrees, like most radiator knobs
+                until = (now_ms + float(minutes) * 60000.0) if minutes else self._manual_target_expiry(
+                    row, settings, room, use_hold_minutes=False)
+                pauses[room] = {"indef": False, "until_ms": until, "source": "boost", "target_c": target}
+                boosted[room] = target
+            if not boosted:
+                return {}
+            await self.hass.services.async_call(
+                DOMAIN, "set_store",
+                {"instance_id": self._instance_id, "activate": False, "settings": {"room_pause": pauses}},
+                blocking=True,
+            )
+        for room, target in boosted.items():
+            for eid in self._with_merged([room], merges):
+                await self._set_room_temp_c(eid, target)
+        _LOGGER.info("ThermostatTimeline boost: %s", boosted)
+        await self._maybe_control_boiler(force=True)
+        await self._schedule_next()
+        return boosted
+
+    async def async_cancel_boost(self, rooms=None) -> list:
+        async with self._manual_target_lock:
+            schedules, settings = self._get_data()
+            pauses = dict(settings.get("room_pause") or {})
+            wanted = set(rooms) if rooms else set(pauses)
+            ended = [room for room in list(pauses)
+                     if room in wanted and (pauses.get(room) or {}).get("source") == "boost"]
+            if not ended:
+                return []
+            for room in ended:
+                pauses.pop(room, None)
+            await self.hass.services.async_call(
+                DOMAIN, "set_store",
+                {"instance_id": self._instance_id, "activate": False, "settings": {"room_pause": pauses}},
+                blocking=True,
+            )
+        for room in ended:
+            await self._apply_room_now(room)
+        await self._maybe_control_boiler(force=True)
+        await self._schedule_next()
+        return ended
 
     async def _maybe_control_boiler(self, force: bool = False) -> None:
         """Control boiler switch (switch.* or input_boolean.*).
@@ -3187,7 +3489,7 @@ class AutoApplyManager:
                             if "." not in sw:
                                 continue
                             sw_domain = sw.split(".", 1)[0]
-                            if sw_domain not in ("switch", "input_boolean"):
+                            if sw_domain not in BOILER_DOMAINS:
                                 continue
                             on_off = _clamp_offset(rc.get("on_offset"))
                             off_off = _clamp_offset(rc.get("off_offset"))
@@ -3197,6 +3499,9 @@ class AutoApplyManager:
                                 "off_off": off_off if off_off is not None else off_offset_c,
                             }
                             groups.setdefault(sw, []).append(entry)
+                            for member in ((settings.get("merges") or {}).get(eid) or []):
+                                if isinstance(member, str) and member.startswith("climate.") and member != eid:
+                                    groups[sw].append({**entry, "eid": member})
                         except Exception:
                             continue
 
@@ -3262,20 +3567,7 @@ class AutoApplyManager:
                                 else:
                                     continue
 
-                            if want == "on" and cur == "on":
-                                continue
-                            if want == "off" and cur == "off":
-                                continue
-
-                            sw_domain = sw.split(".", 1)[0]
-                            if sw_domain not in ("switch", "input_boolean"):
-                                continue
-                            await self.hass.services.async_call(
-                                sw_domain,
-                                "turn_on" if want == "on" else "turn_off",
-                                {"entity_id": sw},
-                                blocking=False,
-                            )
+                            await self._drive_boiler(sw, want, schedules, settings)
                         except Exception:
                             continue
                     return
@@ -3285,7 +3577,7 @@ class AutoApplyManager:
                 if not isinstance(sw, str) or "." not in sw:
                     return
                 sw_domain = sw.split(".", 1)[0]
-                if sw_domain not in ("switch", "input_boolean"):
+                if sw_domain not in BOILER_DOMAINS:
                     return
 
                 # Determine current boiler state up-front (used by single mode)
@@ -3299,6 +3591,7 @@ class AutoApplyManager:
                     rooms = [str(x).strip() for x in br if str(x).strip()]
                     if len(rooms) == 0:
                         return
+                    rooms = self._with_merged(rooms, merges)
                 if rooms is None:
                     rooms = sorted(list(self._all_targets(schedules, merges if isinstance(merges, dict) else {})))
 
@@ -3362,17 +3655,7 @@ class AutoApplyManager:
                     else:
                         return
 
-                if want == "on" and cur == "on":
-                    return
-                if want == "off" and cur == "off":
-                    return
-
-                await self.hass.services.async_call(
-                    sw_domain,
-                    "turn_on" if want == "on" else "turn_off",
-                    {"entity_id": sw},
-                    blocking=False,
-                )
+                await self._drive_boiler(sw, want, schedules, settings)
                 return
 
             # ---- Legacy mode (sensor min/max hysteresis) ----
@@ -3647,6 +3930,10 @@ class AutoApplyManager:
                 return _c_to_f(val_c) if ha_is_f else float(val_c)
 
             desired_c = self._stored_setpoint_c(desired, settings or {})
+            raised_c = self._boiler_raised_c.get(eid)
+            if raised_c is not None:
+                # This room thermostat is also the boiler: keep it firing while other rooms ask for heat.
+                desired_c = max(desired_c, raised_c)
 
             st = self.hass.states.get(eid)
             if not st:

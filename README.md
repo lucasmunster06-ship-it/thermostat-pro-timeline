@@ -1,5 +1,7 @@
 # Thermostat Pro Timeline
 
+> **Fork:** deze versie voegt een thermostaat als ketel (bijv. Nefit), boost per ruimte of voor alles, en ketelvraag vanuit alle radiatoren in een ruimte toe. Zie [FORK.md](FORK.md).
+
 [![Latest release downloads](https://img.shields.io/github/downloads/qlerup/thermostat-pro-timeline/latest/total?label=latest%20release%20downloads)](https://github.com/qlerup/thermostat-pro-timeline/releases/latest) [![Support the project on Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20the%20project-ff5e5b?logo=kofi&logoColor=white)](https://ko-fi.com/qlerup)
 
 Schedule heating and cooling for each room from a 24-hour timeline in Home Assistant. The integration runs saved schedules in the background and the dashboard card lets you edit them.
