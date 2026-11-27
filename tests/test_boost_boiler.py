@@ -132,6 +132,12 @@ class BoostBoilerTests(unittest.IsolatedAsyncioTestCase):
         await self.mgr._maybe_control_boiler()
         self.assertEqual(self.temps(self.nefit)[-1], 20)  # back to the living room schedule, not idle
 
+    async def test_disabling_boiler_control_forgets_the_raise(self):
+        self.settings["boiler_enabled"] = False
+        self.mgr._boiler_raised_c[self.nefit] = 22.5
+        await self.mgr._maybe_control_boiler()
+        self.assertEqual(self.mgr._boiler_raised_c, {})
+
     async def test_boiler_never_exceeds_its_max(self):
         self.states[self.nefit].attributes["current_temperature"] = 23.5
         self.states[self.bed].attributes["current_temperature"] = 18

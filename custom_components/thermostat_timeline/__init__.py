@@ -3447,6 +3447,7 @@ class AutoApplyManager:
                 return
             _schedules, settings = self._get_data()
             if not bool(settings.get("boiler_enabled")):
+                self._boiler_raised_c.clear()
                 return
 
             use_schedule_mode = (
@@ -3960,6 +3961,16 @@ class AutoApplyManager:
             except Exception:
                 pass
             raised_c = self._boiler_raised_c.get(eid)
+            s_now = settings or {}
+            still_boiler = bool(s_now.get("boiler_enabled")) and (
+                s_now.get("boiler_switch") == eid
+                or any(isinstance(r, dict) and r.get("switch") == eid
+                       for r in (s_now.get("boiler_room_settings") or {}).values())
+            )
+            if raised_c is not None and not still_boiler:
+                # Boiler control was switched off or moved to another entity: forget the raise.
+                self._boiler_raised_c.pop(eid, None)
+                raised_c = None
             if raised_c is not None:
                 # This room thermostat is also the boiler: keep it firing while other rooms ask for heat.
                 desired_c = max(desired_c, raised_c)
