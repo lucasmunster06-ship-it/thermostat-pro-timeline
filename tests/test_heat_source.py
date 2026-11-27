@@ -152,5 +152,11 @@ class UpdateTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.calls, [])
 
 
+    async def test_heater_without_plain_heat_mode_uses_heat_cool(self):
+        self.states["climate.eurom"].attributes["hvac_modes"] = ["off", "heat_cool"]
+        await self.hs.update("default", self.mgr)
+        self.assertEqual(self.states["climate.eurom"].state, "heat_cool")
+
+
 if __name__ == "__main__":
     unittest.main()

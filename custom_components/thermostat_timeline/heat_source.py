@@ -220,7 +220,8 @@ class HeatSources:
                     await self._call("climate", "set_hvac_mode", {"entity_id": eid, "hvac_mode": "off"})
                 return
             modes = [str(m) for m in attrs.get("hvac_modes") or []]
-            want_mode = device.get("hvac_mode") or ("heat" if "heat" in modes else None)
+            # Plain "heat" when offered; many Tuya heaters only know "heat_cool" or "auto".
+            want_mode = device.get("hvac_mode") or next((m for m in ("heat", "heat_cool", "auto") if m in modes), None)
             if want_mode and state.state != want_mode and want_mode in modes:
                 await self._call("climate", "set_hvac_mode", {"entity_id": eid, "hvac_mode": want_mode})
             unit = self.hass.config.units.temperature_unit
